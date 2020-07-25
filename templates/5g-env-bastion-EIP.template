@@ -1,0 +1,287 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template is used to deploy a Bastion instance on a VPC public subnet. **WARNING** This template creates Amazon EC2 instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. QS(0037)",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "VPCID",
+                        "PublicSubnetID"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Bastion Configuration"
+                    },
+                    "Parameters": [
+                        "BastionInstanceName",
+                        "BastionAMIOS",
+                        "BastionInstanceType",
+                        "EnableTCPForwarding",
+                        "KeyPairName",
+                        "RemoteAccessCIDR"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "BastionAMIOS": {
+                    "default": "Bastion AMI Operating System"
+                },
+                "BastionInstanceType": {
+                    "default": "Bastion Instance Type"
+                },
+                "BastionInstanceName": {
+                    "default": "Bastion Name"
+                },
+                "EnableTCPForwarding": {
+                    "default": "Enable TCP Forwarding"
+                },
+                "KeyPairName": {
+                    "default": "Key Pair Name"
+                },
+                "PublicSubnetID": {
+                    "default": "Public Subnet ID"
+                },
+                "RemoteAccessCIDR": {
+                    "default": "Allowed Bastion External Access CIDR"
+                },
+                "VPCID": {
+                    "default": "VPC ID"
+                }
+            }
+        }
+    },
+    "Parameters": {
+	    "BastionAMIOS": {
+		    "AllowedValues": [
+		        "Ubuntu-Server-18.04-LTS-HVM",
+			    "Amazon-Linux-HVM"
+		    ],
+		    "Default": "Ubuntu-Server-18.04-LTS-HVM",
+		    "Description": "Ubuntu 18.04 AMI is to be used for the bastion instance.",
+		    "Type": "String"
+	    },
+	    "BastionInstanceType": {
+		    "AllowedValues": [
+			    "t3.small",
+			    "t3.medium",
+			    "t3.large"
+		    ],
+		    "Default": "t3.medium",
+		    "Description": "Amazon EC2 instance type for the bastion instances",
+		    "Type": "String"
+        },
+        "BastionInstanceName": {
+            "Description": "Bastion Instance Name",
+            "Type": "String",
+            "AllowedValues": [
+                "Bastion",
+                "VPC-eNB-Bastion",
+                "VPC-MEC-Bastion",
+                "VPC-GiLAN-Bastion",
+                "VPC-CP-Bastion"
+            ]
+        },
+        "EnableTCPForwarding": {
+            "Type": "String",
+            "Description": "Enable/Disable TCP Forwarding",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "KeyPairName": {
+            "Description": "Enter a Public/private key pair. If you do not have one in this region, please create it before continuing",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "PublicSubnetID": {
+            "Description": "Public subnet that you want to provision the bastion into",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "RemoteAccessCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "Allowed CIDR block for external SSH access to the bastions",
+            "Type": "String",
+            "Default": "0.0.0.0/0"
+        },
+        "VPCID": {
+            "Description": "ID of the VPC",
+            "Type": "AWS::EC2::VPC::Id"
+        }
+    },
+    "Rules": {
+        "SubnetsInVPC": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::EachMemberIn": [
+                            {
+                                "Fn::ValueOfAll": [
+                                    "AWS::EC2::Subnet::Id",
+                                    "VpcId"
+                                ]
+                            },
+                            {
+                                "Fn::RefAll": "AWS::EC2::VPC::Id"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "All subnets must exist in the VPC"
+                }
+            ]
+        }
+    },
+    "Mappings": {
+        "AWSAMIRegionMap": {
+            "us-east-1": {
+                "AMZNLINUXHVM": "ami-0915e09cc7ceee3ab",
+                "US1804HVM": "ami-07ebfd5b3428b6f4d"
+            },
+            "us-east-2": {
+                "AMZNLINUXHVM": "ami-097834fcb3081f51a",
+                "US1804HVM": "ami-0fc20dd1da406780b"
+            },
+            "us-west-1": {
+                "AMZNLINUXHVM": "ami-0027eed75be6f3bf4",
+                "US1804HVM": "ami-03ba3948f6c37a4b0"
+            },
+            "us-west-2": {
+                "AMZNLINUXHVM": "ami-01f08ef3e76b957e5",
+                "US1804HVM": "ami-02d0ea44ae3fe9561"
+            }
+        },
+        "LinuxAMINameMap": {
+            "Amazon-Linux-HVM": {
+                "Code": "AMZNLINUXHVM"
+            },
+            "Ubuntu-Server-18.04-LTS-HVM": {
+                "Code": "US1804HVM"
+            }
+        }
+    },
+
+    "Resources": {
+        "EIP1": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "BastionInstance" : {
+            "Type" : "AWS::EC2::Instance",
+            "Properties" : {
+                "KeyName": {
+                    "Ref": "KeyPairName"
+                },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AWSAMIRegionMap",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap": [
+                                "LinuxAMINameMap",
+                                {
+                                    "Ref": "BastionAMIOS"
+                                },
+                                "Code"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType": {
+                    "Ref": "BastionInstanceType"
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": "true",
+                    "DeviceIndex": "0",
+                    "GroupSet": [{
+                        "Ref" : "BastionSecurityGroup"
+                    }],
+                    "SubnetId": {
+                        "Ref" : "PublicSubnetID"
+                    }
+                }],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Ref" : "BastionInstanceName"}
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+
+        "BastionSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enables SSH Access to Bastion Hosts",
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": {
+                            "Ref": "RemoteAccessCIDR"
+                        }
+                    },
+                    {
+                        "IpProtocol": "icmp",
+                        "FromPort": "-1",
+                        "ToPort": "-1",
+                        "CidrIp": {
+                            "Ref": "RemoteAccessCIDR"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Ref" : "BastionInstanceName"}
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "BastionInstanceID": {
+            "Description": "Bastion EC2 Instance ID",
+            "Value": {
+                "Ref": "BastionInstance"
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-BastionInstanceID"
+                }
+            }
+        },
+        "EIP1": {
+            "Description": "Elastic IP 1 for Bastion",
+            "Value": {
+                "Ref": "EIP1"
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-EIP1"
+                }
+            }
+        }
+    }
+}

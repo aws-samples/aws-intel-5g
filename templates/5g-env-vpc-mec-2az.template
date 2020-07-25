@@ -1,0 +1,656 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template creates a MEC VPC for 5G Infra test environment.",
+    "Metadata": {
+        "Version" : "2.0",
+        "Comment" : "This template configures VPC network with the following resources:",
+        "Comment" : "  - Public and private subnets",
+        "Comment" : "  - Internet Gateway and NAT",
+        "Comment" : "  - 2 Availability Zones",
+
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "VPC Network Configuration"
+                    },
+                    "Parameters": [
+                        "AvailabilityZones",
+                        "VPCMECCIDR",
+                        "VPCMECPubSubnet1CIDR",
+						"VPCMECPubSubnet2CIDR",
+                        "VPCMECPrvSubnetMgmtSx1CIDR",
+						"VPCMECPrvSubnetMgmtSx2CIDR",
+                        "VPCMECPrvSubnetS1UCIDR",
+                        "VPCMECPrvSubnetSGICIDR",
+                        "VPCMECTenancy"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "AvailabilityZones": {
+                    "default": "Availability Zones"
+                },
+                "VPCMECCIDR": {
+                    "default": "VPC-MEC CIDR"
+                },
+                "VPCMECPubSubnet1CIDR": {
+                    "default": "VPC-MEC Public subnet 1 CIDR"
+                },
+				 "VPCMECPubSubnet2CIDR": {
+                    "default": "VPC-MEC Public subnet 2 CIDR"
+                },
+                "VPCMECPrvSubnetMgmtSx1CIDR": {
+                    "default": "VPC-MEC Private subnet Mgmt/Sx 1 CIDR"
+                },
+				 "VPCMECPrvSubnetMgmtSx2CIDR": {
+                    "default": "VPC-MEC Private subnet Mgmt/Sx 2 CIDR"
+                },
+                "VPCMECPrvSubnetS1UCIDR": {
+                    "default": "VPC-MEC Private subnet S1U CIDR"
+                },
+                "VPCMECPrvSubnetSGICIDR": {
+                    "default": "VPC-MEC Private subnet SGI CIDR"
+                },
+                "VPCMECTenancy": {
+                    "default": "VPC-MEC Tenancy"
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "AvailabilityZones": {
+            "Description": "Select one Availability Zone for the VPC.",
+            "Type": "List<AWS::EC2::AvailabilityZone::Name>"
+        },
+        "VPCMECCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.0.0/16",
+            "Description": "CIDR block for VPC-MEC",
+            "Type": "String"
+        },
+        "VPCMECPubSubnet1CIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.0.0/24",
+            "Description": "VPC-MECP public subnet 1 located in Availability Zone 1",
+            "Type": "String"
+        },
+		"VPCMECPubSubnet2CIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.4.0/24",
+            "Description": "VPC-MECP public subnet 2 located in Availability Zone 2",
+            "Type": "String"
+        },
+        "VPCMECPrvSubnetMgmtSx1CIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.1.0/24",
+            "Description": "VPC-MECP private subnet Mgmt/Sx located in Availability Zone 1",
+            "Type": "String"
+        },
+		"VPCMECPrvSubnetMgmtSx2CIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.5.0/24",
+            "Description": "VPC-MECP private subnet Mgmt/Sx located in Availability Zone 2",
+            "Type": "String"
+        },
+        "VPCMECPrvSubnetS1UCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.2.0/24",
+            "Description": "VPC-MECP private subnet S1U located in Availability Zone 1",
+            "Type": "String"
+        },
+        "VPCMECPrvSubnetSGICIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.1.3.0/24",
+            "Description": "VPC-MECP private subnet SGI located in Availability Zone 1",
+            "Type": "String"
+        },
+        "VPCMECTenancy": {
+            "AllowedValues": [
+                "default",
+                "dedicated"
+            ],
+            "Default": "default",
+            "Description": "The allowed tenancy of instances launched into the VPC-MEC",
+            "Type": "String"
+        }
+    },
+
+    "Resources": {
+        "VPCMEC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Ref": "VPCMECCIDR"
+                },
+                "InstanceTenancy": {
+                    "Ref": "VPCMECTenancy"
+                },
+                "EnableDnsSupport": "true",
+                "EnableDnsHostnames": "true",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC"
+                    }
+                ]
+            }
+        },
+        "VPCMECInternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC=IGW"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+        "VPCMECGatewayAttachment": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "VPCMECInternetGateway"
+                }
+            }
+        },
+        "VPCMECPubSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "CidrBlock": {
+                    "Ref": "VPCMECPubSubnet1CIDR"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Ref": "AvailabilityZones"
+                        }
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-pubSubnet1"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ],
+                "MapPublicIpOnLaunch": true
+            }
+        },
+        "VPCMECPubSubnet1RouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-pubSubnet1-rtbl"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+        "VPCMECPubSubnet1Route": {
+            "DependsOn": "VPCMECGatewayAttachment",
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VPCMECPubSubnet1RouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "VPCMECInternetGateway"
+                }
+            }
+        },
+        "VPCMECPubSubnet1RouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "VPCMECPubSubnet1"
+                },
+                "RouteTableId": {
+                    "Ref": "VPCMECPubSubnet1RouteTable"
+                }
+            }
+        },
+        "VPCMECPubSubnet2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "CidrBlock": {
+                    "Ref": "VPCMECPubSubnet2CIDR"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "1",
+                        {
+                            "Ref": "AvailabilityZones"
+                        }
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-pubSubnet2"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ],
+                "MapPublicIpOnLaunch": true
+            }
+        },
+        "VPCMECPubSubnet2RouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-pubSubnet2-rtbl"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+        "VPCMECPubSubnet2Route": {
+            "DependsOn": "VPCMECGatewayAttachment",
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VPCMECPubSubnet2RouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "VPCMECInternetGateway"
+                }
+            }
+        },
+        "VPCMECPubSubnet2RouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "VPCMECPubSubnet2"
+                },
+                "RouteTableId": {
+                    "Ref": "VPCMECPubSubnet2RouteTable"
+                }
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "CidrBlock": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx1CIDR"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Ref": "AvailabilityZones"
+                        }
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-prvSubnet1"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx1RouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-prvSubnet1-rtbl"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx1Route": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx1RouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "VPCMECNATGateway1"
+                }
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx1RouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx1"
+                },
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx1RouteTable"
+                }
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "CidrBlock": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx2CIDR"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "1",
+                        {
+                            "Ref": "AvailabilityZones"
+                        }
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-prvSubnet2"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx2RouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC-prvSubnet2-rtbl"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx2Route": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx2RouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "VPCMECNATGateway1"
+                }
+            }
+        },
+        "VPCMECPrvSubnetMgmtSx2RouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx2"
+                },
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetMgmtSx2RouteTable"
+                }
+            }
+        },
+        "VPCMECPrvSubnetS1U": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "CidrBlock": {
+                    "Ref": "VPCMECPrvSubnetS1UCIDR"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Ref": "AvailabilityZones"
+                        }
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC Private subnet S1U"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetS1URouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC Private subnet S1U"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetS1URoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetS1URouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "VPCMECNATGateway1"
+                }
+            }
+        },
+        "VPCMECPrvSubnetS1URouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "VPCMECPrvSubnetS1U"
+                },
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetS1URouteTable"
+                }
+            }
+        },
+        "VPCMECPrvSubnetSGI": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "CidrBlock": {
+                    "Ref": "VPCMECPrvSubnetSGICIDR"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Ref": "AvailabilityZones"
+                        }
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC Private subnet SGI"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetSGIRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-MEC Private subnet SGI"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ]
+            }
+        },
+        "VPCMECPrvSubnetSGIRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetSGIRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "VPCMECNATGateway1"
+                }
+            }
+        },
+        "VPCMECPrvSubnetSGIRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "VPCMECPrvSubnetSGI"
+                },
+                "RouteTableId": {
+                    "Ref": "VPCMECPrvSubnetSGIRouteTable"
+                }
+            }
+        },
+
+        "VPCMECNAT1EIP": {
+            "DependsOn": "VPCMECGatewayAttachment",
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "VPCMECNATGateway1": {
+            "DependsOn": "VPCMECGatewayAttachment",
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "VPCMECNAT1EIP",
+                        "AllocationId"
+                    ]
+                },
+                "SubnetId": {
+                    "Ref": "VPCMECPubSubnet1"
+                }
+            }
+        }
+    },
+
+    "Outputs": {
+        "VPCMECID": {
+            "Value": {
+                "Ref": "VPCMEC"
+            },
+            "Description": "VPC-MEC ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECID"
+                }
+            }
+        },
+        "VPCMECPublicSubnet1ID": {
+            "Value": {
+                "Ref": "VPCMECPubSubnet1"
+            },
+            "Description": "VPC-MEC Public Subnet 1 ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPubSubnet1"
+                }
+            }
+        },
+		"VPCMECPublicSubnet2ID": {
+            "Value": {
+                "Ref": "VPCMECPubSubnet2"
+            },
+            "Description": "VPC-MEC Public Subnet 2 ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPubSubnet2"
+                }
+            }
+        }
+    }
+}
