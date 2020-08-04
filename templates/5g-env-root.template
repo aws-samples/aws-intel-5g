@@ -60,7 +60,7 @@
                     "default": "Bastion Instance Type"
                 },
                 "BastionInstanceName": {
-                    "default": "Bastion"
+                    "default": "Bastion Name"
                 },
                 "EnableTCPForwarding": {
                     "default": "Enable TCP Forwarding"
@@ -131,10 +131,13 @@
 		    "Type": "String"
         },
         "BastionInstanceName": {
-            "Description": "Bastion Instance Generic Name",
+            "Description": "Bastion Instance Name",
             "Type": "String",
             "AllowedValues": [
-                "Bastion"
+                "VPC-eNB-Bastion",
+                "VPC-MEC-Bastion",
+                "VPC-CP-Bastion",
+                "VPC-GiLAN-Bastion"
             ]
         },
         "EnableTCPForwarding": {
@@ -212,13 +215,13 @@
 	       }
         },
 
-        "BastioneNBStack" : {
+        "VPCeNBBastionStack" : {
            "Condition" : "DeployVPCeNB",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
 	          "TemplateURL" : "https://5g-core-on-aws.s3-us-west-2.amazonaws.com/5g-env-bastion-EIP.template",
 	          "Parameters" : {
-	             "BastionInstanceName": { "Fn::Join" : [ "", ["VPC-eNB-", {"Ref": "BastionInstanceName"}] ] },
+	             "BastionInstanceName": "VPC-eNB-Bastion",
                  "BastionAMIOS": {"Ref": "BastionAMIOS"},
                  "BastionInstanceType": {"Ref": "BastionInstanceType"},
                  "EnableTCPForwarding": {"Ref": "EnableTCPForwarding"},
@@ -230,14 +233,13 @@
               "TimeoutInMinutes" : "10"
 	       }
 	    },
-
-        "BastionMECStack" : {
+		"VPCMECBastionStack" : {
            "Condition" : "DeployVPCMEC",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
 	          "TemplateURL" : "https://5g-core-on-aws.s3-us-west-2.amazonaws.com/5g-env-bastion-EIP.template",
 	          "Parameters" : {
-	             "BastionInstanceName": { "Fn::Join" : [ "", ["VPC-MEC-", {"Ref": "BastionInstanceName"}] ] },
+	             "BastionInstanceName": "VPC-MEC-Bastion",
                  "BastionAMIOS": {"Ref": "BastionAMIOS"},
                  "BastionInstanceType": {"Ref": "BastionInstanceType"},
                  "EnableTCPForwarding": {"Ref": "EnableTCPForwarding"},
@@ -245,6 +247,42 @@
                  "RemoteAccessCIDR": {"Ref": "RemoteAccessCIDR"},
                  "VPCID" : { "Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECID"] },
                  "PublicSubnetID": { "Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECPublicSubnetID"] }
+	          },
+              "TimeoutInMinutes" : "10"
+	       }
+	    },
+		"VPCGiLANBastionStack" : {
+           "Condition" : "DeployVPCGiLAN",
+	       "Type" : "AWS::CloudFormation::Stack",
+	       "Properties" : {
+	          "TemplateURL" : "https://5g-core-on-aws.s3-us-west-2.amazonaws.com/5g-env-bastion-EIP.template",
+	          "Parameters" : {
+	             "BastionInstanceName": "VPC-GiLAN-Bastion",
+                 "BastionAMIOS": {"Ref": "BastionAMIOS"},
+                 "BastionInstanceType": {"Ref": "BastionInstanceType"},
+                 "EnableTCPForwarding": {"Ref": "EnableTCPForwarding"},
+                 "KeyPairName": {"Ref": "KeyPairName"},
+                 "RemoteAccessCIDR": {"Ref": "RemoteAccessCIDR"},
+                 "VPCID" : { "Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANID"] },
+                 "PublicSubnetID": { "Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANPublicSubnetID"] }
+	          },
+              "TimeoutInMinutes" : "10"
+	       }
+	    },
+		"VPCCPBastionStack" : {
+           "Condition" : "DeployVPCCP",
+	       "Type" : "AWS::CloudFormation::Stack",
+	       "Properties" : {
+	          "TemplateURL" : "https://5g-core-on-aws.s3-us-west-2.amazonaws.com/5g-env-bastion-EIP.template",
+	          "Parameters" : {
+	             "BastionInstanceName": "VPC-CP-Bastion",
+                 "BastionAMIOS": {"Ref": "BastionAMIOS"},
+                 "BastionInstanceType": {"Ref": "BastionInstanceType"},
+                 "EnableTCPForwarding": {"Ref": "EnableTCPForwarding"},
+                 "KeyPairName": {"Ref": "KeyPairName"},
+                 "RemoteAccessCIDR": {"Ref": "RemoteAccessCIDR"},
+                 "VPCID" : { "Fn::GetAtt": ["VPCCPStack", "Outputs.VPCCPID"] },
+                 "PublicSubnetID": { "Fn::GetAtt": ["VPCCPStack", "Outputs.VPCCPPublicSubnetID"] }
 	          },
               "TimeoutInMinutes" : "10"
 	       }

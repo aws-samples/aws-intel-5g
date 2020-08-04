@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "This template creates an eNB VPC for 5G Infra test environment.",
+    "Description": "This template creates an CP VPC for 5G Infra test environment.",
     "Metadata": {
         "Version" : "2.0",
         "Comment" : "This template configures VPC network with the following resources:",
@@ -15,11 +15,10 @@
                     },
                     "Parameters": [
                         "AvailabilityZones",
-                        "VPCeNBCIDR",
-                        "VPCeNBPubSubnet1CIDR",
-                        "VPCeNBPrvSubnetMgmtCIDR",
-                        "VPCeNBPrvSubnetS1UCIDR",
-                        "VPCeNBTenancy"
+                        "VPCCPCIDR",
+                        "VPCCPPubSubnet1CIDR",
+                        "VPCCPPrvSubnetMgmtCIDR",
+                        "VPCCPTenancy"
                     ]
                 }
             ],
@@ -27,19 +26,16 @@
                 "AvailabilityZones": {
                     "default": "Availability Zones"
                 },
-                "VPCeNBCIDR": {
-                    "default": "VPC-eNB CIDR"
+                "VPCCPCIDR": {
+                    "default": "VPC-CP CIDR"
                 },
-                "VPCeNBPubSubnet1CIDR": {
-                    "default": "VPC-eNB Public subnet 1 CIDR"
+                "VPCCPPubSubnet1CIDR": {
+                    "default": "VPC-CP Public subnet 1 CIDR"
                 },
-                "VPCeNBPrvSubnetMgmtCIDR": {
-                    "default": "VPC-eNB Private subnet Mgmt CIDR"
+                "VPCCPPrvSubnetMgmtCIDR": {
+                    "default": "VPC-CP Private subnet Mgmt/S11-MME CIDR"
                 },
-                "VPCeNBPrvSubnetS1UCIDR": {
-                    "default": "VPC-eNB Private subnet S1U CIDR"
-                },
-                "VPCeNBTenancy": {
+                "VPCCPTenancy": {
                     "default": "Default"
                 }
             }
@@ -50,71 +46,64 @@
             "Description": "Select one Availability Zone for the VPC.",
             "Type": "List<AWS::EC2::AvailabilityZone::Name>"
         },
-        "VPCeNBCIDR": {
+        "VPCCPCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
-            "Default": "10.2.0.0/16",
-            "Description": "CIDR block for VPC-eNB",
+            "Default": "10.4.0.0/16",
+            "Description": "CIDR block for VPC-CP",
             "Type": "String"
         },
-        "VPCeNBPubSubnet1CIDR": {
+        "VPCCPPubSubnet1CIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
-            "Default": "10.2.0.0/24",
-            "Description": "VPC-eNBP public subnet 1 located in Availability Zone 1",
+            "Default": "10.4.0.0/24",
+            "Description": "VPC-CP public subnet 1 located in Availability Zone 1",
             "Type": "String"
         },
-        "VPCeNBPrvSubnetMgmtCIDR": {
+        "VPCCPPrvSubnetMgmtCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
-            "Default": "10.2.1.0/24",
-            "Description": "VPC-eNBP private subnet Mgmt located in Availability Zone 1",
+            "Default": "10.4.1.0/24",
+            "Description": "VPC-CP private subnet Mgmt/S11-MME located in Availability Zone 1",
             "Type": "String"
         },
-        "VPCeNBPrvSubnetS1UCIDR": {
-            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
-            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
-            "Default": "10.2.2.0/24",
-            "Description": "VPC-eNBP private subnet S1U located in Availability Zone 1",
-            "Type": "String"
-        },
-        "VPCeNBTenancy": {
+        "VPCCPTenancy": {
             "AllowedValues": [
                 "default"
             ],
             "Default": "default",
-            "Description": "The allowed tenancy of instances launched into VPC-eNB",
+            "Description": "The allowed tenancy of instances launched into VPC-CP",
             "Type": "String"
         }
     },
 
     "Resources": {
-        "VPCeNB": {
+        "VPCCP": {
             "Type": "AWS::EC2::VPC",
             "Properties": {
                 "CidrBlock": {
-                    "Ref": "VPCeNBCIDR"
+                    "Ref": "VPCCPCIDR"
                 },
                 "InstanceTenancy": {
-                    "Ref": "VPCeNBTenancy"
+                    "Ref": "VPCCPTenancy"
                 },
                 "EnableDnsSupport": "true",
                 "EnableDnsHostnames": "true",
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-eNB"
+                        "Value": "VPC-CP"
                     }
                 ]
             }
         },
-        "VPCeNBInternetGateway": {
+        "VPCCPInternetGateway": {
             "Type": "AWS::EC2::InternetGateway",
             "Properties": {
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-eNB-IGW"
+                        "Value": "VPC-CP-IGW"
                     },
                     {
                         "Key": "Network",
@@ -123,25 +112,31 @@
                 ]
             }
         },
-        "VPCeNBGatewayAttachment": {
+        "VPCCPGatewayAttachment": {
             "Type": "AWS::EC2::VPCGatewayAttachment",
             "Properties": {
                 "VpcId": {
-                    "Ref": "VPCeNB"
+                    "Ref": "VPCCP"
                 },
                 "InternetGatewayId": {
-                    "Ref": "VPCeNBInternetGateway"
+                    "Ref": "VPCCPInternetGateway"
                 }
+				"Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "VPC-CP-IGW Attachment"
+                    }
+                ]
             }
         },
-        "VPCeNBPubSubnet1": {
+        "VPCCPPubSubnet1": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
-                    "Ref": "VPCeNB"
+                    "Ref": "VPCCP"
                 },
                 "CidrBlock": {
-                    "Ref": "VPCeNBPubSubnet1CIDR"
+                    "Ref": "VPCCPPubSubnet1CIDR"
                 },
                 "AvailabilityZone": {
                     "Fn::Select": [
@@ -154,7 +149,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-eNB-pubSubnet"
+                        "Value": "VPC-CP-pubSubnet"
                     },
                     {
                         "Key": "Network",
@@ -164,16 +159,16 @@
                 "MapPublicIpOnLaunch": true
             }
         },
-        "VPCeNBPubSubnetRouteTable": {
+        "VPCCPPubSubnetRouteTable": {
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
                 "VpcId": {
-                    "Ref": "VPCeNB"
+                    "Ref": "VPCCP"
                 },
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-eNB-pubSubnet-rtbl"
+                        "Value": "VPC-CP-pubSubnet-rtbl"
                     },
                     {
                         "Key": "Network",
@@ -182,39 +177,39 @@
                 ]
             }
         },
-        "VPCeNBPubSubnetRoute": {
-            "DependsOn": "VPCeNBGatewayAttachment",
+        "VPCCPPubSubnetRoute": {
+            "DependsOn": "VPCCPGatewayAttachment",
             "Type": "AWS::EC2::Route",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "VPCeNBPubSubnetRouteTable"
+                    "Ref": "VPCCPPubSubnetRouteTable"
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "GatewayId": {
-                    "Ref": "VPCeNBInternetGateway"
+                    "Ref": "VPCCPInternetGateway"
                 }
             }
         },
-        "VPCeNBPubSubnet1RouteTableAssociation": {
+        "VPCCPPubSubnet1RouteTableAssociation": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "SubnetId": {
-                    "Ref": "VPCeNBPubSubnet1"
+                    "Ref": "VPCCPPubSubnet1"
                 },
                 "RouteTableId": {
-                    "Ref": "VPCeNBPubSubnetRouteTable"
+                    "Ref": "VPCCPPubSubnetRouteTable"
                 }
             }
         },
 
-        "VPCeNBPrvSubnetMgmt": {
+        "VPCCPPrvSubnetMgmt": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
-                    "Ref": "VPCeNB"
+                    "Ref": "VPCCP"
                 },
                 "CidrBlock": {
-                    "Ref": "VPCeNBPrvSubnetMgmtCIDR"
+                    "Ref": "VPCCPPrvSubnetMgmtCIDR"
                 },
                 "AvailabilityZone": {
                     "Fn::Select": [
@@ -227,7 +222,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-eNB-prvSubnet"
+                        "Value": "VPC-CP-prvSubnet"
                     },
                     {
                         "Key": "Network",
@@ -236,16 +231,16 @@
                 ]
             }
         },
-        "VPCeNBPrvSubnetMgmtRouteTable": {
+        "VPCCPPrvSubnetMgmtRouteTable": {
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
                 "VpcId": {
-                    "Ref": "VPCeNB"
+                    "Ref": "VPCCP"
                 },
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-eNB-prvSubnet-rtbl"
+                        "Value": "VPC-CP-prvSubnet-rtbl"
                     },
                     {
                         "Key": "Network",
@@ -254,145 +249,74 @@
                 ]
             }
         },
-        "VPCeNBPrvSubnetMgmtRoute": {
+        "VPCCPPrvSubnetMgmtRoute": {
             "Type": "AWS::EC2::Route",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "VPCeNBPrvSubnetMgmtRouteTable"
+                    "Ref": "VPCCPPrvSubnetMgmtRouteTable"
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "NatGatewayId": {
-                    "Ref": "VPCeNBNATGateway1"
+                    "Ref": "VPCCPNATGateway1"
                 }
             }
         },
-        "VPCeNBPrvSubnetMgmtRouteTableAssociation": {
+        "VPCCPPrvSubnetMgmtRouteTableAssociation": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "SubnetId": {
-                    "Ref": "VPCeNBPrvSubnetMgmt"
+                    "Ref": "VPCCPPrvSubnetMgmt"
                 },
                 "RouteTableId": {
-                    "Ref": "VPCeNBPrvSubnetMgmtRouteTable"
+                    "Ref": "VPCCPPrvSubnetMgmtRouteTable"
                 }
             }
         },
 
-        "VPCeNBPrvSubnetS1U": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "VpcId": {
-                    "Ref": "VPCeNB"
-                },
-                "CidrBlock": {
-                    "Ref": "VPCeNBPrvSubnetS1UCIDR"
-                },
-                "AvailabilityZone": {
-                    "Fn::Select": [
-                        "0",
-                        {
-                            "Ref": "AvailabilityZones"
-                        }
-                    ]
-                },
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "VPC-eNB-S1U-Subnet"
-                    },
-                    {
-                        "Key": "Network",
-                        "Value": "Private"
-                    }
-                ]
-            }
-        },
-        "VPCeNBPrvSubnetS1URouteTable": {
-            "Type": "AWS::EC2::RouteTable",
-            "Properties": {
-                "VpcId": {
-                    "Ref": "VPCeNB"
-                },
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "VPC-eNB-S1U-Subnet-rtbl"
-                    },
-                    {
-                        "Key": "Network",
-                        "Value": "Private"
-                    }
-                ]
-            }
-        },
-        "VPCeNBPrvSubnetS1URoute": {
-            "Type": "AWS::EC2::Route",
-            "Properties": {
-                "RouteTableId": {
-                    "Ref": "VPCeNBPrvSubnetS1URouteTable"
-                },
-                "DestinationCidrBlock": "0.0.0.0/0",
-                "NatGatewayId": {
-                    "Ref": "VPCeNBNATGateway1"
-                }
-            }
-        },
-        "VPCeNBPrvSubnetS1URouteTableAssociation": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "VPCeNBPrvSubnetS1U"
-                },
-                "RouteTableId": {
-                    "Ref": "VPCeNBPrvSubnetS1URouteTable"
-                }
-            }
-        },
-
-        "VPCeNBNAT1EIP": {
-            "DependsOn": "VPCeNBGatewayAttachment",
+        "VPCCPNAT1EIP": {
+            "DependsOn": "VPCCPGatewayAttachment",
             "Type": "AWS::EC2::EIP",
             "Properties": {
                 "Domain": "vpc"
             }
         },
-        "VPCeNBNATGateway1": {
-            "DependsOn": "VPCeNBGatewayAttachment",
+        "VPCCPNATGateway1": {
+            "DependsOn": "VPCCPGatewayAttachment",
             "Type": "AWS::EC2::NatGateway",
             "Properties": {
                 "AllocationId": {
                     "Fn::GetAtt": [
-                        "VPCeNBNAT1EIP",
+                        "VPCCPNAT1EIP",
                         "AllocationId"
                     ]
                 },
                 "SubnetId": {
-                    "Ref": "VPCeNBPubSubnet1"
+                    "Ref": "VPCCPPubSubnet1"
                 }
             }
         }
     },
 
     "Outputs": {
-        "VPCeNBID": {
+        "VPCCPID": {
             "Value": {
-                "Ref": "VPCeNB"
+                "Ref": "VPCCP"
             },
-            "Description": "VPC-eNB ID",
+            "Description": "VPC-CP ID",
             "Export": {
                 "Name": {
-                    "Fn::Sub": "${AWS::StackName}-VPCeNBID"
+                    "Fn::Sub": "${AWS::StackName}-VPCCPID"
                 }
             }
         },
-        "VPCeNBPublicSubnetID": {
+        "VPCCPPublicSubnetID": {
             "Value": {
-                "Ref": "VPCeNBPubSubnet1"
+                "Ref": "VPCCPPubSubnet1"
             },
-            "Description": "VPC-eNB Public Subnet ID",
+            "Description": "VPC-CP Public Subnet ID",
             "Export": {
                 "Name": {
-                    "Fn::Sub": "${AWS::StackName}-VPCeNBPubSubnet1"
+                    "Fn::Sub": "${AWS::StackName}-VPCCPPubSubnet1"
                 }
             }
         }
