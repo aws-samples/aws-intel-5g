@@ -395,6 +395,39 @@
                     "Fn::Sub": "${AWS::StackName}-VPCGiLANPubSubnet1"
                 }
             }
+        },
+		"VPCGiLANSGISubnetID": {
+            "Value": {
+                "Ref": "VPCGiLANPrvSubnetSGI"
+            },
+            "Description": "VPC-GiLAN SGI Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCGiLANPrvSubnetSGI"
+                }
+            }
+        },
+		"VPCGiLANPrvSubnetMgmtRouteTableID": {
+            "Value": {
+                "Ref": "VPCGiLANPrvSubnetMgmtRouteTable"
+            },
+            "Description": "VPC-GiLAN Mgmt Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCGiLANPrvSubnetMgmtRouteTable"
+                }
+            }
+        },
+		"VPCeNBPrvSubnetS1URouteTableID": {
+            "Value": {
+                "Ref": "VPCGiLANPrvSubnetSGIRouteTable"
+            },
+            "Description": "VPC-GiLAN SGI Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCGiLANPrvSubnetSGIRouteTable"
+                }
+            }
         }
     }
 }

@@ -287,5 +287,264 @@
               "TimeoutInMinutes" : "10"
 	       }
 	    }
+		"VPCeNB-VPCMECTransitGateway" : {
+			"Condition" : {"Fn::And": ["DeployVPCeNB", "DeployVPCMEC"]},
+			"Type" : "AWS::EC2::TransitGateway",
+			"Properties: : {
+				"Description" : "VPC-eNB-VPC-MEC-S1U-TGW",			
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-eNB-VPC-MEC-S1U-TGW"
+					}
+				]
+			}						
+		},
+		"VPCeNBS1UTransitGatewayAttachment" : {
+			"Condition" : {"Fn::And": ["DeployVPCeNB", "DeployVPCMEC"]},
+			"Type" : "AWS::EC2::TransitGatewayAttachment",
+			"Properties: : {
+				"SubnetIds" : [{ "Fn::GetAtt": ["VPCeNBStack", "Outputs.VPCeNBS1USubnetID"] }],
+				"TransitGatewayId" : {"Ref" : "VPCeNB-VPCMECTransitGateway"},
+				"VpcId" : {"Fn::GetAtt": ["VPCeNBStack", "Outputs.VPCeNBID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-eNB-S1U-TGW-Attach"
+					}
+				]
+			}
+		},
+		"VPCMECS1UTransitGateway1Attachment" : {
+			"Condition" : {"Fn::And": ["DeployVPCeNB", "DeployVPCMEC"]},
+			"Type" : "AWS::EC2::TransitGatewayAttachment",
+			"Properties: : {
+				"SubnetIds" : [{ "Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECS1USubnetID"] }],
+				"TransitGatewayId" : {"Ref" : "VPCeNB-VPCMECTransitGateway"},
+				"VpcId" : {"Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-MEC-S1U-TGW1-Attach"
+					}
+				]
+			}
+		},
+		"VPCeNB-VPCMECTransitGatewayRouteTable" : {
+			"Condition" : {"Fn::And": ["DeployVPCeNB", "DeployVPCMEC"]},
+			"Type" : "AWS::EC2::TransitGatewayRouteTable",
+			"Properties: : {
+				"TransitGatewayId" : {"Ref" : "VPCeNB-VPCMECTransitGateway"}
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-eNB-VPC-MEC-S1U-TGWrtbl"
+					}
+				]
+			}						
+		},
+		"VPCeNBS1UTransitGatewayRoute" : {
+			"Condition" : {"Fn::And": ["DeployVPCeNB", "DeployVPCMEC"]},
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties: : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNB-VPCMECTransitGatewayRouteTable"}
+				"DestinationCidrBlock" : "10.2.0.0/16"
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCeNBS1UTransitGatewayAttachment"}
+			}						
+		},
+		"VPCMECS1UTransitGatewayRoute" : {
+			"Condition" : {"Fn::And": ["DeployVPCeNB", "DeployVPCMEC"]},
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties: : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNB-VPCMECTransitGatewayRouteTable"}
+				"DestinationCidrBlock" : "10.1.0.0/16"
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECS1UTransitGateway1Attachment"}
+			}						
+		},
+		"VPCMEC-VPCGiLANTransitGateway" : {
+			"Condition" : {"Fn::And": ["DeployVPCMEC", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::TransitGateway",
+			"Properties: : {
+				"Description" : "VPC-MEC-VPC-GiLAN-SGI-TGW",			
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-MEC-VPC-GiLAN-SGI-TGW"
+					}
+				]
+			}	
+		},
+		"VPCMECS1UTransitGateway2Attachment" : {
+			"Condition" : {"Fn::And": [ "DeployVPCMEC", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::TransitGatewayAttachment",
+			"Properties: : {
+				"SubnetIds" : [{ "Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECSGISubnetID"] }],
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCGiLANTransitGateway"},
+				"VpcId" : {"Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-MEC-S1U-TGW2-Attach"
+					}
+				]
+			}
+		},
+		"VPCGiLANSGITransitGatewayAttachment" : {
+			"Condition" : {"Fn::And": ["DeployVPCMEC", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::TransitGatewayAttachment",
+			"Properties: : {
+				"SubnetIds" : [{ "Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANSGISubnetID"] }],
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCGiLANTransitGateway"},
+				"VpcId" : {"Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-GiLAN-SGI-TGW-Attach"
+					}
+				]
+			}
+		},
+		"VPCMEC-VPCGiLANTransitGatewayRouteTable" : {
+			"Condition" : {"Fn::And": ["DeployVPCMEC", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::TransitGatewayRouteTable",
+			"Properties: : {
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCGiLANTransitGateway"},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-MEC-VPC-GiLAN-SGI-TGWrtbl"
+					}
+				]
+			}	
+		},
+		"VPCMECSGITransitGatewayRoute" : {
+			"Condition" : {"Fn::And": ["DeployVPCMEC", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties: : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMEC-VPCGiLANTransitGatewayRouteTable"}
+				"DestinationCidrBlock" : "10.2.0.0/16"
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECS1UTransitGateway2Attachment"}
+			}						
+		},
+		"VPCGiLANSGITransitGatewayRoute" : {
+			"Condition" : {"Fn::And": ["DeployVPCMEC", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties: : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMEC-VPCGiLANTransitGatewayRouteTable"}
+				"DestinationCidrBlock" : "10.3.0.0/16"
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCGiLANSGITransitGatewayAttachment"}
+			}						
+		},
+		"VPCMEC-VPCCPTransitGateway" : {
+			"Condition" : {"Fn::And": ["DeployVPCMEC", "DeployVPCCP"]},
+			"Type" : "AWS::EC2::TransitGateway",
+			"Properties: : {
+				"Description" : "VPC-MEC-VPC-CP-TGW",			
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-MEC-VPC-CP-TGW"
+					}
+				]
+			}	
+		},
+		"VPCMECMgmtTransitGatewayAttachment" : {
+			"Condition" : {"Fn::And": [ "DeployVPCMEC", "DeployVPCCP"]},
+			"Type" : "AWS::EC2::TransitGatewayAttachment",
+			"Properties: : {
+				"SubnetIds" : [{ "Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECPrivateSubnetID"] }],
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCCPTransitGateway"},
+				"VpcId" : {"Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-MEC-Mgmt-TGW-Attach"
+					}
+				]
+			}
+		},
+		"VPCCPMgmtTransitGatewayAttachment" : {
+			"Condition" : {"Fn::And": [ "DeployVPCMEC", "DeployVPCCP"]},
+			"Type" : "AWS::EC2::TransitGatewayAttachment",
+			"Properties: : {
+				"SubnetIds" : [{ "Fn::GetAtt": ["VPCCPStack", "Outputs.VPCCPPrivateSubnetID"] }],
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCCPTransitGateway"},
+				"VpcId" : {"Fn::GetAtt": ["VPCCPStack", "Outputs.VPCCPID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-CP-Mgmt-TGW-Attach"
+					}
+				]
+			}
+		},
+		"VPCeNBPrvSubnetS1URoute" : {
+			"Condition" : "DeployVPCeNB",
+			"Type" : "AWS::EC2::Route",
+			"Properties: : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCeNBStack", "Outputs.VPCeNBPrvSubnetS1URouteTableID"]},
+				"DestinationCidrBlock" : "10.1.0.0/16",
+				"TransitGatewayId" : {"Ref" : "VPCeNB-VPCMECTransitGateway"}
+			}
+		},
+		"VPCMECPrvSubnetS1URoute" : {
+			"Condition" : "DeployVPCeNB",
+			"Type" : "AWS::EC2::Route",
+			"Properties: : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECPrvSubnetS1URouteTableID"]},
+				"DestinationCidrBlock" : "10.2.0.0/16",
+				"TransitGatewayId" : {"Ref" : "VPCeNB-VPCMECTransitGateway"}
+			}
+		},
+		"VPCMECPrvSubnetSGIRoute" : {
+			"Condition" : "DeployVPCGiLAN",
+			"Type" : "AWS::EC2::Route",
+			"Properties: : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECPrvSubnetSGIRouteTableID"]},
+				"DestinationCidrBlock" : "10.3.0.0/16",
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCGiLANTransitGateway"}
+			}
+		},
+		"VPCGiLANPrvSubnetSGIRoute" : {
+			"Condition" : "DeployVPCGiLAN",
+			"Type" : "AWS::EC2::Route",
+			"Properties: : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANPrvSubnetSGIRouteTableID"]},
+				"DestinationCidrBlock" : "10.1.0.0/16",
+				"TransitGatewayId" : {"Ref" : "VPCMEC-VPCGiLANTransitGateway"}
+			}
+		},
+		"VPCeNB-VPCGiLANPeeringConnection" : {
+			"Condition" : {"Fn::And": [ "DeployVPCeNB", "DeployVPCGiLAN"]},
+			"Type": "AWS::EC2::VPCPeeringConnection",
+			"Properties": {
+				"VpcId" : {"Fn::GetAtt": ["VPCeNBStack", "Outputs.VPCeNBID"]},
+				"PeerVpcId" : {"Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANID"]},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : "VPC-eNB-VPC-GiLAN-Peering"
+					}
+				]
+			}	
+		},
+		"VPCeNBPrvSubnetMgmtRoute" : {
+			"Condition" : {"Fn::And": [ "DeployVPCeNB", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::Route",
+			"Properties: : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCeNBStack", "Outputs.VPCeNBPrvSubnetMgmtRouteTableID"]},
+				"DestinationCidrBlock" : "10.3.0.0/16",
+				"VpcPeeringConnectionId" : {"Ref" : "VPCeNB-VPCGiLANPeeringConnection"}
+			}
+		},
+		"VPCGiLANPrvSubnetMgmtRoute" : {
+			"Condition" : {"Fn::And": [ "DeployVPCeNB", "DeployVPCGiLAN"]},
+			"Type" : "AWS::EC2::Route",
+			"Properties: : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANPrvSubnetMgmtRouteTableID"]},
+				"DestinationCidrBlock" : "10.2.0.0/16",
+				"VpcPeeringConnectionId" : {"Ref" : "VPCeNB-VPCGiLANPeeringConnection"}
+			}
+		}
     }
 }

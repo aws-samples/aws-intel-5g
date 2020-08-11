@@ -395,6 +395,39 @@
                     "Fn::Sub": "${AWS::StackName}-VPCeNBPubSubnet1"
                 }
             }
+        },
+		"VPCeNBS1USubnetID": {
+            "Value": {
+                "Ref": "VPCeNBPrvSubnetS1U"
+            },
+            "Description": "VPC-eNB S1U Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCeNBPrvSubnetS1U"
+                }
+            }
+        },
+		"VPCeNBPrvSubnetMgmtRouteTableID": {
+            "Value": {
+                "Ref": "VPCeNBPrvSubnetMgmtRouteTable"
+            },
+            "Description": "VPC-eNB Mgmt Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCeNBPrvSubnetMgmtRouteTable"
+                }
+            }
+        },
+		"VPCeNBPrvSubnetS1URouteTableID": {
+            "Value": {
+                "Ref": "VPCeNBPrvSubnetS1URouteTable"
+            },
+            "Description": "VPC-eNB S1U Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCeNBPrvSubnetS1URouteTable"
+                }
+            }
         }
     }
 }

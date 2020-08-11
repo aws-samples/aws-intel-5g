@@ -477,6 +477,61 @@
                     "Fn::Sub": "${AWS::StackName}-VPCMECPubSubnet1"
                 }
             }
+        },
+        "VPCMECPrivateSubnetID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetMgmtSx"
+            },
+            "Description": "VPC-MEC Private Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetMgmtSx"
+                }
+            }
+        },
+		"VPCMECS1USubnetID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetS1U"
+            },
+            "Description": "VPC-MEC S1U Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetS1U"
+                }
+            }
+        },
+		"VPCMECSGISubnetID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetSGI"
+            },
+            "Description": "VPC-MEC SGI Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetSGI"
+                }
+            }
+        },
+		"VPCMECPrvSubnetS1URouteTableID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetS1URouteTable"
+            },
+            "Description": "VPC-MEC S1U Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetS1URouteTable"
+                }
+            }
+        },
+		"VPCMECPrvSubnetSGIRouteTableID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetSGIRouteTable"
+            },
+            "Description": "VPC-MEC SGI Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetSGIRouteTable"
+                }
+            }
         }
     }
 }

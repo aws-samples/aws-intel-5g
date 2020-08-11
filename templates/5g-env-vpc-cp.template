@@ -319,6 +319,17 @@
                     "Fn::Sub": "${AWS::StackName}-VPCCPPubSubnet1"
                 }
             }
+        },
+        "VPCCPPrivateSubnetID": {
+            "Value": {
+                "Ref": "VPCCPPrvSubnetMgmt"
+            },
+            "Description": "VPC-CP Private Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCCPPrvSubnetMgmt"
+                }
+            }
         }
     }
 }
