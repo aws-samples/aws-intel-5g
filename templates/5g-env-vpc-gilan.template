@@ -418,7 +418,7 @@
                 }
             }
         },
-		"VPCeNBPrvSubnetS1URouteTableID": {
+		"VPCGiLANPrvSubnetSGIRouteTableID": {
             "Value": {
                 "Ref": "VPCGiLANPrvSubnetSGIRouteTable"
             },

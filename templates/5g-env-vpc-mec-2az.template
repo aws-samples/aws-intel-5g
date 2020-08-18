@@ -6,7 +6,6 @@
         "Comment" : "This template configures VPC network with the following resources:",
         "Comment" : "  - Public and private subnets",
         "Comment" : "  - Internet Gateway and NAT",
-        "Comment" : "  - 2 Availability Zones",
 
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
@@ -80,7 +79,7 @@
 		"VPCMECPubSubnet2CIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
-            "Default": "10.1.4.0/24",
+            "Default": "10.1.10.0/24",
             "Description": "VPC-MECP public subnet 2 located in Availability Zone 2",
             "Type": "String"
         },
@@ -94,7 +93,7 @@
 		"VPCMECPrvSubnetMgmtSx2CIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
-            "Default": "10.1.5.0/24",
+            "Default": "10.1.11.0/24",
             "Description": "VPC-MECP private subnet Mgmt/Sx located in Availability Zone 2",
             "Type": "String"
         },
@@ -149,7 +148,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC=IGW"
+                        "Value": "VPC-MEC-IGW"
                     },
                     {
                         "Key": "Network",
@@ -473,7 +472,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC Private subnet S1U"
+                        "Value": "VPC-MEC-S1U-Subnet"
                     },
                     {
                         "Key": "Network",
@@ -491,7 +490,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC Private subnet S1U"
+                        "Value": "VPC-MEC-S1U-Subnet-rtbl"
                     },
                     {
                         "Key": "Network",
@@ -543,7 +542,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC Private subnet SGI"
+                        "Value": "VPC-MEC-SGI-Subnet"
                     },
                     {
                         "Key": "Network",
@@ -561,7 +560,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC Private subnet SGI"
+                        "Value": "VPC-MEC-SGI-Subnet-rtbl"
                     },
                     {
                         "Key": "Network",
@@ -630,7 +629,7 @@
                 }
             }
         },
-        "VPCMECPublicSubnet1ID": {
+        "VPCMECPublicSubnetID": {
             "Value": {
                 "Ref": "VPCMECPubSubnet1"
             },
@@ -649,6 +648,72 @@
             "Export": {
                 "Name": {
                     "Fn::Sub": "${AWS::StackName}-VPCMECPubSubnet2"
+                }
+            }
+        },
+        "VPCMECPrivateSubnetID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetMgmtSx1"
+            },
+            "Description": "VPC-MEC Private Subnet 1 ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetMgmtSx1"
+                }
+            }
+        },
+        "VPCMECPrivateSubnet2ID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetMgmtSx2"
+            },
+            "Description": "VPC-MEC Private Subnet 2 ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetMgmtSx2"
+                }
+            }
+        },
+		"VPCMECS1USubnetID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetS1U"
+            },
+            "Description": "VPC-MEC S1U Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetS1U"
+                }
+            }
+        },
+		"VPCMECSGISubnetID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetSGI"
+            },
+            "Description": "VPC-MEC SGI Subnet ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetSGI"
+                }
+            }
+        },
+		"VPCMECPrvSubnetS1URouteTableID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetS1URouteTable"
+            },
+            "Description": "VPC-MEC S1U Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetS1URouteTable"
+                }
+            }
+        },
+		"VPCMECPrvSubnetSGIRouteTableID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetSGIRouteTable"
+            },
+            "Description": "VPC-MEC SGI Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetSGIRouteTable"
                 }
             }
         }

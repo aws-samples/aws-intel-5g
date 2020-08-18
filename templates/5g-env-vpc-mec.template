@@ -466,7 +466,7 @@
                     "Fn::Sub": "${AWS::StackName}-VPCMECID"
                 }
             }
-        }
+        },
         "VPCMECPublicSubnetID": {
             "Value": {
                 "Ref": "VPCMECPubSubnet1"
