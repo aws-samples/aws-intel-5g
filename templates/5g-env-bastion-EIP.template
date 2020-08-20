@@ -153,6 +153,14 @@
             "us-west-2": {
                 "AMZNLINUXHVM": "ami-01f08ef3e76b957e5",
                 "US1804HVM": "ami-003634241a8fcdec0"
+            },
+			"ap-southeast-1": {
+                "AMZNLINUXHVM": "ami-0c0d01aec729d094d",
+                "US1804HVM": "ami-0007cf37783ff7e10"
+            },
+			"ap-south-1": {
+                "AMZNLINUXHVM": "ami-0a780d5bac870126a",
+                "US1804HVM": "ami-02b5fbc2cb28b77b8"
             }
         },
         "LinuxAMINameMap": {

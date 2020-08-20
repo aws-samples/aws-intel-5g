@@ -28,7 +28,6 @@
                         "default": "Bastion Configuration"
                     },
                     "Parameters": [
-                        "BastionInstanceName",
                         "BastionAMIOS",
                         "BastionInstanceType",
                         "EnableTCPForwarding",
@@ -129,16 +128,6 @@
 		    "Default": "t3.medium",
 		    "Description": "Amazon EC2 instance type for the bastion instances",
 		    "Type": "String"
-        },
-        "BastionInstanceName": {
-            "Description": "Bastion Instance Name",
-            "Type": "String",
-            "AllowedValues": [
-                "VPC-eNB-Bastion",
-                "VPC-MEC-Bastion",
-                "VPC-CP-Bastion",
-                "VPC-GiLAN-Bastion"
-            ]
         },
         "EnableTCPForwarding": {
             "Type": "String",
