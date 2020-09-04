@@ -15,6 +15,7 @@
                     },
                     "Parameters": [
                         "AvailabilityZones",
+						"VPCCPName",
                         "VPCCPCIDR",
                         "VPCCPPubSubnet1CIDR",
                         "VPCCPPrvSubnetMgmtCIDR",
@@ -26,6 +27,9 @@
                 "AvailabilityZones": {
                     "default": "Availability Zones"
                 },
+				"VPCCPName": {
+					"default": "VPC-CP Name"
+				},
                 "VPCCPCIDR": {
                     "default": "VPC-CP CIDR"
                 },
@@ -46,6 +50,11 @@
             "Description": "Select one Availability Zone for the VPC.",
             "Type": "List<AWS::EC2::AvailabilityZone::Name>"
         },
+		"VPCCPName": {
+			"Description": "VPC GiLAN name",
+			"Type": "String",
+			"Default": "VPC-CP"
+		},
         "VPCCPCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
@@ -92,7 +101,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-CP"
+                        "Value": {"Ref": "VPCCPName"}
                     }
                 ]
             }
@@ -103,7 +112,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-CP-IGW"
+                        "Value": {"Fn::Sub": "${VPCCPName}-IGW"}
                     },
                     {
                         "Key": "Network",
@@ -120,14 +129,8 @@
                 },
                 "InternetGatewayId": {
                     "Ref": "VPCCPInternetGateway"
-                },
-				"Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "VPC-CP-IGW Attachment"
-                    }
-                ]
-            }
+                }
+		    }
         },
         "VPCCPPubSubnet1": {
             "Type": "AWS::EC2::Subnet",
@@ -149,7 +152,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-CP-pubSubnet"
+                        "Value": {"Fn::Sub": "${VPCCPName}-pubSubnet"}
                     },
                     {
                         "Key": "Network",
@@ -168,7 +171,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-CP-pubSubnet-rtbl"
+                        "Value": {"Fn::Sub": "${VPCCPName}-pubSubnet-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -222,7 +225,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-CP-prvSubnet"
+                        "Value": {"Fn::Sub": "${VPCCPName}-prvSubnet"}
                     },
                     {
                         "Key": "Network",
@@ -240,7 +243,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-CP-prvSubnet-rtbl"
+                        "Value": {"Fn::Sub": "${VPCCPName}-prvSubnet-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -277,7 +280,13 @@
             "DependsOn": "VPCCPGatewayAttachment",
             "Type": "AWS::EC2::EIP",
             "Properties": {
-                "Domain": "vpc"
+                "Domain": "vpc",
+				"Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Fn::Sub": "${VPCCPName}-EIP"}
+                    }
+				]
             }
         },
         "VPCCPNATGateway1": {
@@ -292,7 +301,13 @@
                 },
                 "SubnetId": {
                     "Ref": "VPCCPPubSubnet1"
-                }
+                },
+				"Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Fn::Sub": "${VPCCPName}-NATGW"}
+                    }
+				]
             }
         }
     },
@@ -328,6 +343,17 @@
             "Export": {
                 "Name": {
                     "Fn::Sub": "${AWS::StackName}-VPCCPPrvSubnetMgmt"
+                }
+            }
+        },
+		"VPCCPPrvSubnetMgmtRouteTableID": {
+            "Value": {
+                "Ref": "VPCCPPrvSubnetMgmtRouteTable"
+            },
+            "Description": "VPC-CP Mgmt Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCCPPrvSubnetMgmtRouteTable"
                 }
             }
         }

@@ -15,6 +15,7 @@
                     },
                     "Parameters": [
                         "AvailabilityZones",
+						"VPCMECName",
                         "VPCMECCIDR",
                         "VPCMECPubSubnet1CIDR",
 						"VPCMECPubSubnet2CIDR",
@@ -30,6 +31,9 @@
                 "AvailabilityZones": {
                     "default": "Availability Zones"
                 },
+				"VPCMECName": {
+					"default": "VPC MEC Name"
+				},
                 "VPCMECCIDR": {
                     "default": "VPC-MEC CIDR"
                 },
@@ -62,6 +66,11 @@
             "Description": "Select one Availability Zone for the VPC.",
             "Type": "List<AWS::EC2::AvailabilityZone::Name>"
         },
+		"VPCMECName": {
+			"Description": "VPC eNB name",
+			"Type": "String",
+			"Default": "VPC-MEC"
+		},
         "VPCMECCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
@@ -137,7 +146,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC"
+                        "Value": {"Ref": "VPCMECName"}
                     }
                 ]
             }
@@ -148,7 +157,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-IGW"
+                        "Value": {"Fn::Sub": "${VPCMECName}-IGW"}
                     },
                     {
                         "Key": "Network",
@@ -188,7 +197,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-pubSubnet1"
+                        "Value": {"Fn::Sub": "${VPCMECName}-pubSubnet1"}
                     },
                     {
                         "Key": "Network",
@@ -207,7 +216,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-pubSubnet1-rtbl"
+                        "Value": {"Fn::Sub": "${VPCMECName}-pubSubnet1-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -260,7 +269,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-pubSubnet2"
+                        "Value": {"Fn::Sub": "${VPCMECName}-pubSubnet2"}
                     },
                     {
                         "Key": "Network",
@@ -279,7 +288,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-pubSubnet2-rtbl"
+                        "Value": {"Fn::Sub": "${VPCMECName}-pubSubnet2-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -332,7 +341,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-prvSubnet1"
+                        "Value": {"Fn::Sub": "${VPCMECName}-prvSubnet1"}
                     },
                     {
                         "Key": "Network",
@@ -350,7 +359,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-prvSubnet1-rtbl"
+                        "Value": {"Fn::Sub": "${VPCMECName}-prvSubnet1-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -402,7 +411,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-prvSubnet2"
+                        "Value": {"Fn::Sub": "${VPCMECName}-prvSubnet2"}
                     },
                     {
                         "Key": "Network",
@@ -420,7 +429,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-prvSubnet2-rtbl"
+                        "Value": {"Fn::Sub": "${VPCMECName}-prvSubnet2-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -472,7 +481,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-S1U-Subnet"
+                        "Value": {"Fn::Sub": "${VPCMECName}-S1U-Subnet"}
                     },
                     {
                         "Key": "Network",
@@ -490,7 +499,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-S1U-Subnet-rtbl"
+                        "Value": {"Fn::Sub": "${VPCMECName}-S1U-Subnet-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -542,7 +551,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-SGI-Subnet"
+                        "Value": {"Fn::Sub": "${VPCMECName}-SGI-Subnet"}
                     },
                     {
                         "Key": "Network",
@@ -560,7 +569,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "VPC-MEC-SGI-Subnet-rtbl"
+                        "Value": {"Fn::Sub": "${VPCMECName}-SGI-Subnet-rtbl"}
                     },
                     {
                         "Key": "Network",
@@ -597,7 +606,13 @@
             "DependsOn": "VPCMECGatewayAttachment",
             "Type": "AWS::EC2::EIP",
             "Properties": {
-                "Domain": "vpc"
+                "Domain": "vpc",
+				"Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Fn::Sub": "${VPCMECName}-EIP"}
+                    }
+				]
             }
         },
         "VPCMECNATGateway1": {
@@ -612,7 +627,13 @@
                 },
                 "SubnetId": {
                     "Ref": "VPCMECPubSubnet1"
-                }
+                },
+				"Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Fn::Sub": "${VPCMECName}-NATGW"}
+                    }
+				]
             }
         }
     },
@@ -714,6 +735,17 @@
             "Export": {
                 "Name": {
                     "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetSGIRouteTable"
+                }
+            }
+        },
+		"VPCMECPrvSubnetMgmtRouteTableID": {
+            "Value": {
+                "Ref": "VPCMECPrvSubnetMgmtSxRouteTable"
+            },
+            "Description": "VPC-MEC Mgmt Route Table ID",
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-VPCMECPrvSubnetMgmtSxRouteTable"
                 }
             }
         }
