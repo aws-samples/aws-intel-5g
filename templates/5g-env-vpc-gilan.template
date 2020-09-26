@@ -17,10 +17,13 @@
                         "AvailabilityZones",
 						"VPCGiLANName",
                         "VPCGiLANCIDR",
+						"UENETCIDR",
                         "VPCGiLANPubSubnet1CIDR",
                         "VPCGiLANPrvSubnetMgmtCIDR",
                         "VPCGiLANPrvSubnetSGICIDR",
-                        "VPCGiLANTenancy"
+                        "VPCGiLANTenancy",
+						"RemoteAccessCIDR",
+                        "S3BucketName"
                     ]
                 }
             ],
@@ -34,6 +37,9 @@
                 "VPCGiLANCIDR": {
                     "default": "VPC-GiLAN CIDR"
                 },
+				"UENETCIDR": {
+                    "default": "UE NET CIDR"
+                },
                 "VPCGiLANPubSubnet1CIDR": {
                     "default": "VPC-GiLAN Public subnet 1 CIDR"
                 },
@@ -43,8 +49,14 @@
                 "VPCGiLANPrvSubnetSGICIDR": {
                     "default": "VPC-GiLAN Private subnet SGI CIDR"
                 },
+				"RemoteAccessCIDR": {
+                    "default": "Allowed Instance External Access CIDR"
+                },
                 "VPCGiLANTenancy": {
                     "default": "Default"
+                },
+                "S3BucketName": {
+                    "default": "S3 Bucket Name"
                 }
             }
         }
@@ -87,6 +99,13 @@
             "Description": "VPC-GiLAN private subnet SGI located in Availability Zone 1",
             "Type": "String"
         },
+		"UENETCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[0-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Default": "172.16.0.0/12",
+            "Description": "CIDR block for UE NET",
+            "Type": "String"
+        },
         "VPCGiLANTenancy": {
             "AllowedValues": [
                 "default"
@@ -94,7 +113,18 @@
             "Default": "default",
             "Description": "The allowed tenancy of instances launched into VPC-GiLAN",
             "Type": "String"
-        }
+        },
+		"RemoteAccessCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "Allowed CIDR block for external SSH access to the EC2 instance",
+            "Type": "String",
+            "Default": "0.0.0.0/0"
+        },
+        "S3BucketName": {
+			"Description": "S3 Bucket Name",
+			"Type": "String"
+		}
     },
 
     "Resources": {
@@ -390,6 +420,76 @@
                         "Value": {"Fn::Sub": "${VPCGiLANName}-NATGW"}
                     }
 				]
+            }
+        },
+        "GetSupernetCIDR": {
+			"Type": "Custom::SupernetCIDR",
+			"Properties": {
+				"ServiceToken": { "Fn::GetAtt" : ["SupernetCIDRFunction", "Arn"] },
+				"VPCCIDR": {"Ref": "VPCGiLANCIDR"}
+			}
+		},
+
+		"SupernetCIDRFunction": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+			"Code": {
+				"S3Bucket": {"Ref": "S3BucketName"},
+				"S3Key": "lambda_function.zip"
+			},
+			"Handler": "lambda_function.handler_supernet_ip_cidr",
+			"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
+			"Runtime": "python3.8",
+			"Timeout": "30"
+			}
+		},
+        "LambdaExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {"Service": ["lambda.amazonaws.com"]},
+						"Action": ["sts:AssumeRole"]
+					}]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+				]
+			}
+		},
+		"SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enables SSH Access to EC2 instance",
+				"GroupName": {"Fn::Sub": "${VPCGiLANName}-Instance-SG"},
+                "VpcId": {
+                    "Ref": "VPCGiLAN"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "-1",
+                        "ToPort": "-1",
+                        "CidrIp": {"Fn::GetAtt": ["GetSupernetCIDR", "SupernetCIDR"]}
+                    },
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "-1",
+                        "ToPort": "-1",
+                        "CidrIp": {
+                            "Ref": "UENETCIDR"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Fn::Sub": "${VPCGiLANName}-Instance-SG"}
+                    }
+                ]
             }
         }
     },
