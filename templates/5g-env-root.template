@@ -29,7 +29,10 @@
 						"VPCGiLANCIDR",
                         "DeployVPCCP",
 						"VPCCPName",
-						"VPCCPCIDR"
+						"VPCCPCIDR",
+						"UENETCIDR",
+						"ENBNETCIDR",
+						"S3BucketName"
                     ]
                 },
                 {
@@ -105,6 +108,15 @@
                 },
                 "RemoteAccessCIDR": {
                     "default": "Allowed Bastion External Access CIDR"
+                },
+				"UENETCIDR": {
+                    "default": "Allowed UE NET CIDR"
+                },
+				"ENBNETCIDR": {
+                    "default": "Allowed ENB NET CIDR"
+                },
+				"S3BucketName": {
+                    "default": "S3 Bucket for storing the cloudformation templates"
                 }
             }
         }
@@ -127,6 +139,10 @@
 			"Type": "String",
 			"Default": "VPC-eNB"
 		},
+		"S3BucketName": {
+			"Description": "S3 Bucket Name",
+			"Type": "String"
+		},
 		"VPCeNBCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
@@ -148,7 +164,8 @@
 				"no"
 			],
 			"Description": "If yes, deploy VPC-MEC with multiple AZ",
-			"Type": "String"
+			"Type": "String",
+            "Default": "no"
 		},
 		"VPCMECName": {
 			"Description": "VPC MEC Name",
@@ -240,6 +257,20 @@
             "Description": "Allowed CIDR block for external SSH access to the bastions",
             "Type": "String",
             "Default": "0.0.0.0/0"
+        },
+		"UENETCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "Allowed CIDR block for UE NET",
+            "Type": "String",
+            "Default": "172.16.0.0/12"
+        },
+		"ENBNETCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "Allowed CIDR block for ENB NET",
+            "Type": "String",
+            "Default": "192.168.0.0/16"
         }
     },
 
@@ -276,11 +307,13 @@
            "Condition" : "DeployVPCeNB",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-vpc-enb.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-vpc-enb.template"},
 	          "Parameters" : {
 	             "AvailabilityZones": {"Fn::Join": [",", {"Ref": "AvailabilityZones"}] },
 				 "VPCeNBName": {"Ref": "VPCeNBName"},
-				 "VPCeNBCIDR": {"Ref": "VPCeNBCIDR"}, 
+				 "VPCeNBCIDR": {"Ref": "VPCeNBCIDR"},
+				 "ENBNETCIDR": {"Ref": "ENBNETCIDR"},
+                 "S3BucketName": {"Ref": "S3BucketName"},
 				 "VPCeNBPubSubnet1CIDR": {"Fn::Select" : [0, { "Fn::Cidr" : [{"Ref": "VPCeNBCIDR"}, 256, 8]}]},
                  "VPCeNBPrvSubnetMgmtCIDR": {"Fn::Select" : [1, { "Fn::Cidr" : [{"Ref": "VPCeNBCIDR"}, 256, 8]}]},
                  "VPCeNBPrvSubnetS1UCIDR": {"Fn::Select" : [2, { "Fn::Cidr" : [{"Ref": "VPCeNBCIDR"}, 256, 8]}]}
@@ -295,13 +328,15 @@
 	          "TemplateURL" : {
 					"Fn::If": [
 						"DeployVPCMECMultiAZ",
-						"https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-vpc-mec-2az.template",
-						"https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-vpc-mec.template"
+						{"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-vpc-mec-2az.template"},
+						{"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-vpc-mec.template"}
 					]},
 	          "Parameters" : {
 	             "AvailabilityZones": {"Fn::Join": [",", {"Ref": "AvailabilityZones"}] },
 				 "VPCMECName": {"Ref": "VPCMECName"},
 				 "VPCMECCIDR": {"Ref": "VPCMECCIDR"},
+				 "ENBNETCIDR": {"Ref": "ENBNETCIDR"},
+                 "S3BucketName": {"Ref": "S3BucketName"},
                  "VPCMECPubSubnet1CIDR": {"Fn::Select" : [0, { "Fn::Cidr" : [{"Ref": "VPCMECCIDR"}, 256, 8]}]},
                  "VPCMECPrvSubnetMgmtSx1CIDR": {"Fn::Select" : [1, { "Fn::Cidr" : [{"Ref": "VPCMECCIDR"}, 256, 8]}]},
                  "VPCMECPrvSubnetS1UCIDR": {"Fn::Select" : [2, { "Fn::Cidr" : [{"Ref": "VPCMECCIDR"}, 256, 8]}]},
@@ -324,11 +359,13 @@
            "Condition" : "DeployVPCGiLAN",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-vpc-gilan.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-vpc-gilan.template"},
 	          "Parameters" : {
 	             "AvailabilityZones": {"Fn::Join": [",", {"Ref": "AvailabilityZones"}] },
 				 "VPCGiLANName": {"Ref": "VPCGiLANName"},
 				 "VPCGiLANCIDR": {"Ref": "VPCGiLANCIDR"},
+				 "UENETCIDR": {"Ref": "UENETCIDR"},
+                 "S3BucketName": {"Ref": "S3BucketName"},
                  "VPCGiLANPubSubnet1CIDR": {"Fn::Select" : [0, { "Fn::Cidr" : [{"Ref": "VPCGiLANCIDR"}, 256, 8]}]},
                  "VPCGiLANPrvSubnetMgmtCIDR": {"Fn::Select" : [1, { "Fn::Cidr" : [{"Ref": "VPCGiLANCIDR"}, 256, 8]}]},
                  "VPCGiLANPrvSubnetSGICIDR": {"Fn::Select" : [3, { "Fn::Cidr" : [{"Ref": "VPCGiLANCIDR"}, 256, 8]}]}
@@ -340,11 +377,12 @@
            "Condition" : "DeployVPCCP",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-vpc-cp.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-vpc-cp.template"},
 	          "Parameters" : {
 	             "AvailabilityZones": {"Fn::Join": [",", {"Ref": "AvailabilityZones"}] },
 				 "VPCCPName": {"Ref": "VPCCPName"},
 				 "VPCCPCIDR": {"Ref": "VPCCPCIDR"},
+                 "S3BucketName": {"Ref": "S3BucketName"},
                  "VPCCPPubSubnet1CIDR": {"Fn::Select" : [0, { "Fn::Cidr" : [{"Ref": "VPCCPCIDR"}, 256, 8]}]},
                  "VPCCPPrvSubnetMgmtCIDR": {"Fn::Select" : [1, { "Fn::Cidr" : [{"Ref": "VPCCPCIDR"}, 256, 8]}]}
 	          },
@@ -357,7 +395,7 @@
 		   "DependsOn" : "VPCeNBStack",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-bastion-EIP.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-bastion-EIP.template"},
 	          "Parameters" : {
 	             "BastionInstanceName": {"Fn::Sub": "${VPCeNBName}-Bastion"},
                  "BastionAMIOS": {"Ref": "BastionAMIOS"},
@@ -376,7 +414,7 @@
 		   "DependsOn" : "VPCMECStack",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-bastion-EIP.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-bastion-EIP.template"},
 	          "Parameters" : {
 	             "BastionInstanceName": {"Fn::Sub": "${VPCMECName}-Bastion"},
                  "BastionAMIOS": {"Ref": "BastionAMIOS"},
@@ -395,7 +433,7 @@
 		   "DependsOn" : "VPCGiLANStack",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-bastion-EIP.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-bastion-EIP.template"},
 	          "Parameters" : {
 	             "BastionInstanceName": {"Fn::Sub": "${VPCGiLANName}-Bastion"},
                  "BastionAMIOS": {"Ref": "BastionAMIOS"},
@@ -414,7 +452,7 @@
 		   "DependsOn" : "VPCCPStack",
 	       "Type" : "AWS::CloudFormation::Stack",
 	       "Properties" : {
-	          "TemplateURL" : "https://5g-core-cfn-on-aws.s3.us-east-2.amazonaws.com/5g-env-bastion-EIP.template",
+	          "TemplateURL" : {"Fn::Sub": "https://${S3BucketName}.s3-${AWS::Region}.amazonaws.com/5g-env-bastion-EIP.template"},
 	          "Parameters" : {
 	             "BastionInstanceName": {"Fn::Sub": "${VPCCPName}-Bastion"},
                  "BastionAMIOS": {"Ref": "BastionAMIOS"},
@@ -432,7 +470,9 @@
 			"Condition" : "DeployVPCeNBVPCMECTGW",
 			"Type" : "AWS::EC2::TransitGateway",
 			"Properties" : {
-				"Description" : {"Fn::Sub": "${VPCeNBName}-${VPCMECName}-S1U-TGW"},			
+				"Description" : {"Fn::Sub": "${VPCeNBName}-${VPCMECName}-S1U-TGW"},
+				"DefaultRouteTableAssociation": "disable",
+				"DefaultRouteTablePropagation": "disable",
 				"Tags" : [
 					{
 						"Key" : "Name",
@@ -496,6 +536,15 @@
 				"TransitGatewayAttachmentId" : {"Ref" : "VPCeNBS1UTransitGatewayAttachment"}
 			}						
 		},
+		"VPCeNBENBNETTransitGatewayRoute" : {
+			"Condition" : "DeployVPCeNBVPCMECTGW",
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNBVPCMECTransitGatewayRouteTable"},
+				"DestinationCidrBlock" : {"Ref": "ENBNETCIDR"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCeNBS1UTransitGatewayAttachment"}
+			}						
+		},
 		"VPCMECS1UTransitGatewayRoute" : {
 			"Condition" : "DeployVPCeNBVPCMECTGW",
 			"Type" : "AWS::EC2::TransitGatewayRoute",
@@ -504,12 +553,47 @@
 				"DestinationCidrBlock" : {"Ref": "VPCMECCIDR"},
 				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECS1UTransitGatewayAttachment"}
 			}						
+		},		
+		"VPCeNBS1UTransitGatewayRouteTablePropagation" : {
+			"Condition" : "DeployVPCeNBVPCMECTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTablePropagation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNBVPCMECTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCeNBS1UTransitGatewayAttachment"}
+			}						
 		},
+		"VPCMECS1UTransitGatewayRouteTablePropagation" : {
+			"Condition" : "DeployVPCeNBVPCMECTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTablePropagation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNBVPCMECTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECS1UTransitGatewayAttachment"}
+			}						
+		},
+		"VPCeNBS1UTransitGatewayRouteTableAssociation" : {
+			"Condition" : "DeployVPCeNBVPCMECTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTableAssociation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNBVPCMECTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCeNBS1UTransitGatewayAttachment"}
+			}						
+		},
+		"VPCMECS1UTransitGatewayRouteTableAssociation" : {
+			"Condition" : "DeployVPCeNBVPCMECTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTableAssociation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCeNBVPCMECTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECS1UTransitGatewayAttachment"}
+			}						
+		},	
 		"VPCMECVPCGiLANTransitGateway" : {
 			"Condition" : "DeployVPCMECVPCGiLANTGW",
 			"Type" : "AWS::EC2::TransitGateway",
+			
 			"Properties" : {
-				"Description" : {"Fn::Sub": "${VPCMECName}-${VPCGiLANName}-SGI-TGW"},			
+				"Description" : {"Fn::Sub": "${VPCMECName}-${VPCGiLANName}-SGI-TGW"},
+				"DefaultRouteTableAssociation": "disable",
+				"DefaultRouteTablePropagation": "disable",
 				"Tags" : [
 					{
 						"Key" : "Name",
@@ -566,7 +650,16 @@
 			"Type" : "AWS::EC2::TransitGatewayRoute",
 			"Properties" : {
 				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCGiLANTransitGatewayRouteTable"},
-				"DestinationCidrBlock" : {"Ref": "VPCeNBCIDR"},
+				"DestinationCidrBlock" : {"Ref": "VPCMECCIDR"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECSGITransitGatewayAttachment"}
+			}						
+		},
+		"VPCMECUENETTransitGatewayRoute" : {
+			"Condition" : "DeployVPCMECVPCGiLANTGW",
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCGiLANTransitGatewayRouteTable"},
+				"DestinationCidrBlock" : {"Ref": "UENETCIDR"},
 				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECSGITransitGatewayAttachment"}
 			}						
 		},
@@ -579,15 +672,49 @@
 				"TransitGatewayAttachmentId" : {"Ref" : "VPCGiLANSGITransitGatewayAttachment"}
 			}						
 		},
+		"VPCMECSGITransitGatewayRouteTablePropagation" : {
+			"Condition" : "DeployVPCMECVPCGiLANTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTablePropagation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCGiLANTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECSGITransitGatewayAttachment"}
+			}						
+		},
+		"VPCGiLANSGITransitGatewayRouteTablePropagation" : {
+			"Condition" : "DeployVPCMECVPCGiLANTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTablePropagation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCGiLANTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCGiLANSGITransitGatewayAttachment"}
+			}						
+		},
+		"VPCMECSGITransitGatewayRouteRouteTableAssociation" : {
+			"Condition" : "DeployVPCMECVPCGiLANTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTableAssociation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCGiLANTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECSGITransitGatewayAttachment"}
+			}						
+		},
+		"VPCGiLANSGITransitGatewayRouteRouteTableAssociation" : {
+			"Condition" : "DeployVPCMECVPCGiLANTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTableAssociation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCGiLANTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCGiLANSGITransitGatewayAttachment"}
+			}						
+		},
 		"VPCMECVPCCPTransitGateway" : {
 			"Condition" : "DeployVPCMECVPCCPTGW",
 			"Type" : "AWS::EC2::TransitGateway",
 			"Properties" : {
-				"Description" : {"Fn::Sub": "${VPCMECName}-${VPCCPName}-TGW"},			
+				"Description" : {"Fn::Sub": "${VPCMECName}-${VPCCPName}-Mgmt-TGW"},
+				"DefaultRouteTableAssociation": "disable",
+				"DefaultRouteTablePropagation": "disable",
 				"Tags" : [
 					{
 						"Key" : "Name",
-						"Value" : {"Fn::Sub": "${VPCMECName}-${VPCCPName}-TGW"}
+						"Value" : {"Fn::Sub": "${VPCMECName}-${VPCCPName}-Mgmt-TGW"}
 					}
 				]
 			}	
@@ -621,6 +748,69 @@
 					}
 				]
 			}
+		},
+		"VPCMECVPCCPTransitGatewayRouteTable" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTable",
+			"Properties" : {
+				"TransitGatewayId" : {"Ref" : "VPCMECVPCCPTransitGateway"},
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : {"Fn::Sub": "${VPCMECName}-${VPCCPName}-Mgmt-TGWrtbl"}
+					}
+				]
+			}	
+		},
+		"VPCMECMgmtTransitGatewayRoute" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCCPTransitGatewayRouteTable"},
+				"DestinationCidrBlock" : {"Ref": "VPCMECCIDR"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECMgmtTransitGatewayAttachment"}
+			}						
+		},
+		"VPCCPMgmtTransitGatewayRoute" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRoute",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCCPTransitGatewayRouteTable"},
+				"DestinationCidrBlock" : {"Ref": "VPCCPCIDR"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCCPMgmtTransitGatewayAttachment"}
+			}						
+		},
+		"VPCMECMgmtTransitGatewayRouteTablePropagation" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTablePropagation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCCPTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECMgmtTransitGatewayAttachment"}
+			}						
+		},
+		"VPCCPMgmtTransitGatewayRouteTablePropagation" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTablePropagation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCCPTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCCPMgmtTransitGatewayAttachment"}
+			}						
+		},
+		"VPCMECMgmtTransitGatewayRouteRouteTableAssociation" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTableAssociation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCCPTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCMECMgmtTransitGatewayAttachment"}
+			}						
+		},
+		"VPCCPMgmtTransitGatewayRouteRouteTableAssociation" : {
+			"Condition" : "DeployVPCMECVPCCPTGW",
+			"Type" : "AWS::EC2::TransitGatewayRouteTableAssociation",
+			"Properties" : {
+				"TransitGatewayRouteTableId" : {"Ref" : "VPCMECVPCCPTransitGatewayRouteTable"},
+				"TransitGatewayAttachmentId" : {"Ref" : "VPCCPMgmtTransitGatewayAttachment"}
+			}						
 		},
 		"VPCeNBVPCGiLANPeeringConnection" : {
 			"Condition" : "DeployVPCeNBVPCGiLANPC",
@@ -674,6 +864,16 @@
 				"TransitGatewayId" : {"Ref" : "VPCeNBVPCMECTransitGateway"}
 			}
 		},
+		"VPCMECPrvSubnetENBNETRoute" : {
+			"Condition" : "DeployVPCeNBVPCMECTGW",
+			"DependsOn" : ["VPCeNBVPCMECTransitGateway", "VPCMECS1UTransitGatewayAttachment"],
+			"Type" : "AWS::EC2::Route",
+			"Properties" : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCMECStack", "Outputs.VPCMECPrvSubnetS1URouteTableID"]},
+				"DestinationCidrBlock" : {"Ref": "ENBNETCIDR"},
+				"TransitGatewayId" : {"Ref" : "VPCeNBVPCMECTransitGateway"}
+			}
+		},
 		"VPCMECPrvSubnetSGIRoute" : {
 			"Condition" : "DeployVPCMECVPCGiLANTGW",
 			"DependsOn" : ["VPCMECVPCGiLANTransitGateway", "VPCMECSGITransitGatewayAttachment"],
@@ -691,6 +891,16 @@
 			"Properties" : {
 				"RouteTableId" : {"Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANPrvSubnetSGIRouteTableID"]},
 				"DestinationCidrBlock" : {"Ref": "VPCMECCIDR"},
+				"TransitGatewayId" : {"Ref" : "VPCMECVPCGiLANTransitGateway"}
+			}
+		},
+		"VPCGiLANPrvSubnetUENETRoute" : {
+			"Condition" : "DeployVPCMECVPCGiLANTGW",
+			"DependsOn" : ["VPCMECVPCGiLANTransitGateway", "VPCGiLANSGITransitGatewayAttachment"],
+			"Type" : "AWS::EC2::Route",
+			"Properties" : {
+				"RouteTableId" : {"Fn::GetAtt": ["VPCGiLANStack", "Outputs.VPCGiLANPrvSubnetSGIRouteTableID"]},
+				"DestinationCidrBlock" : {"Ref": "UENETCIDR"},
 				"TransitGatewayId" : {"Ref" : "VPCMECVPCGiLANTransitGateway"}
 			}
 		},

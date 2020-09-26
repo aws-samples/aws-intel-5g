@@ -23,7 +23,10 @@
 						"VPCMECPrvSubnetMgmtSx2CIDR",
                         "VPCMECPrvSubnetS1UCIDR",
                         "VPCMECPrvSubnetSGICIDR",
-                        "VPCMECTenancy"
+                        "VPCMECTenancy",
+						"RemoteAccessCIDR",
+						"ENBNETCIDR",
+                        "S3BucketName"
                     ]
                 }
             ],
@@ -36,6 +39,9 @@
 				},
                 "VPCMECCIDR": {
                     "default": "VPC-MEC CIDR"
+                },
+				"ENBNETCIDR": {
+                    "default": "eNB Network CIDR"
                 },
                 "VPCMECPubSubnet1CIDR": {
                     "default": "VPC-MEC Public subnet 1 CIDR"
@@ -55,8 +61,14 @@
                 "VPCMECPrvSubnetSGICIDR": {
                     "default": "VPC-MEC Private subnet SGI CIDR"
                 },
+				"RemoteAccessCIDR": {
+                    "default": "Allowed Instance External Access CIDR"
+                },
                 "VPCMECTenancy": {
                     "default": "VPC-MEC Tenancy"
+                },
+                "S3BucketName": {
+                    "default": "S3 Bucket Name"
                 }
             }
         }
@@ -76,6 +88,13 @@
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
             "Default": "10.1.0.0/16",
             "Description": "CIDR block for VPC-MEC",
+            "Type": "String"
+        },
+		"ENBNETCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "192.168.0.0/16",
+            "Description": "CIDR block for ENB_NET",
             "Type": "String"
         },
         "VPCMECPubSubnet1CIDR": {
@@ -128,7 +147,18 @@
             "Default": "default",
             "Description": "The allowed tenancy of instances launched into the VPC-MEC",
             "Type": "String"
-        }
+        },
+		"RemoteAccessCIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "Allowed CIDR block for external SSH access to the EC2 instance",
+            "Type": "String",
+            "Default": "0.0.0.0/0"
+        },
+        "S3BucketName": {
+			"Description": "S3 Bucket Name",
+			"Type": "String"
+		}
     },
 
     "Resources": {
@@ -634,6 +664,76 @@
                         "Value": {"Fn::Sub": "${VPCMECName}-NATGW"}
                     }
 				]
+            }
+        },
+        "GetSupernetCIDR": {
+			"Type": "Custom::SupernetCIDR",
+			"Properties": {
+				"ServiceToken": { "Fn::GetAtt" : ["SupernetCIDRFunction", "Arn"] },
+				"VPCCIDR": {"Ref": "VPCMECCIDR"}
+			}
+		},
+
+		"SupernetCIDRFunction": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+			"Code": {
+				"S3Bucket": {"Ref": "S3BucketName"},
+				"S3Key": "lambda_function.zip"
+			},
+			"Handler": "lambda_function.handler_supernet_ip_cidr",
+			"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
+			"Runtime": "python3.8",
+			"Timeout": "30"
+			}
+		},
+        "LambdaExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {"Service": ["lambda.amazonaws.com"]},
+						"Action": ["sts:AssumeRole"]
+					}]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+				]
+			}
+		},
+		"SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enables SSH Access to EC2 instance",
+				"GroupName": {"Fn::Sub": "${VPCMECName}-Instance-SG"},
+                "VpcId": {
+                    "Ref": "VPCMEC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "-1",
+                        "ToPort": "-1",
+                        "CidrIp": {"Fn::GetAtt": ["GetSupernetCIDR", "SupernetCIDR"]}
+                    },
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "-1",
+                        "ToPort": "-1",
+                        "CidrIp": {
+                            "Ref": "ENBNETCIDR"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {"Fn::Sub": "${VPCMECName}-Instance-SG"}
+                    }
+                ]
             }
         }
     },
