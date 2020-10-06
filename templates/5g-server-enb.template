@@ -21,6 +21,7 @@
                     },
                     "Parameters": [
                         "EC2InstanceName",
+                        "EC2InstanceCount",
                         "KeyPairName",
                         "AMIID",
                         "InstanceType",
@@ -48,6 +49,9 @@
                 },
                 "EC2InstanceName": {
                     "default": "Instance Name"
+                },
+                "EC2InstanceCount": {
+                    "default": "Instance Count"
                 },
                 "EnableTCPForwarding": {
                     "default": "Enable TCP Forwarding"
@@ -119,6 +123,11 @@
             "Description": "EC2 Instance Name",
             "Type": "String"
         },
+        "EC2InstanceCount": {
+            "Default": 5,
+            "Description": "EC2 Instance Count",
+            "Type": "Number"
+        },
         "KeyPairName": {
             "Description": "Enter a public/private key pair. If you do not have one in this region, please create it before continuing",
             "Type": "AWS::EC2::KeyPair::KeyName"
@@ -144,11 +153,11 @@
 			"Type": "String"
 		},
         "ENBNETCIDR": {
-            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/16)$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16",
             "Description": "Allowed CIDR block for ENB NET",
             "Type": "String",
-            "Default": "192.168.0.0/24"
+            "Default": "192.168.0.0/16"
         }
     },
     "Rules": {
@@ -175,35 +184,23 @@
     },
 
     "Resources": {
-        "InterfaceMgmt" : {
-            "Type" : "AWS::EC2::NetworkInterface",
-            "Properties" : {
-                "SubnetId" : { "Ref" : "MgmtSubnetID" },
-                "Description" :"Interface for management traffic",
-                "GroupSet" : [ {"Ref" : "SecurityGroup"} ],
-                "SourceDestCheck" : "true",
-                "Tags" : [ {"Key" : "Name", "Value" : {"Fn::Sub": "${EC2InstanceName}-Mgmt-Iface"}}]
-            }
-        },
-        "InterfaceS1U" : {
-            "Type" : "AWS::EC2::NetworkInterface",
-            "Properties" : {
-                "SubnetId" : { "Ref" : "S1USubnetID" },
-                "Description" :"Interface for management traffic",
-                "GroupSet" : [ {"Ref" : "SecurityGroup"} ],
-                "SourceDestCheck" : "false",
-                "Tags" : [ {"Key" : "Name", "Value" :{"Fn::Sub": "${EC2InstanceName}-S1U-Iface"}}]
-            }
-        },
-		"GetRouteTableID": {
-			"Type": "Custom::RouteTableID",
+		"MultipleInstances": {
+			"Type": "Custom::MultipleInstances",
 			"Properties": {
-				"ServiceToken": { "Fn::GetAtt" : ["RouteTableIDFunction", "Arn"] },
-				"SubnetID": {"Ref": "S1USubnetID"}
+				"ServiceToken": { "Fn::GetAtt" : ["MultipleInstancesFunction", "Arn"] },
+                "ImageID": {"Ref": "AMIID"},
+                "VPCType": "enb",
+                "InstanceName": {"Ref": "EC2InstanceName"},
+                "InstanceCount": {"Ref": "EC2InstanceCount"},
+                "SecurityGroup": {"Ref": "SecurityGroup"},
+                "KeyPair": {"Ref": "KeyPairName"},
+                "InstanceType": {"Ref": "InstanceType"},
+				"SubnetIds": [{"Ref": "MgmtSubnetID"}, {"Ref": "S1USubnetID"}],
+                "DestinationCIDR": {"Ref": "ENBNETCIDR"}
 			}
 		},
 
-		"RouteTableIDFunction": {
+		"MultipleInstancesFunction": {
 			"Type": "AWS::Lambda::Function",
 			"Properties": {
 			"Code": {
@@ -213,43 +210,9 @@
 			"Handler": "lambda_function.lambda_handler",
 			"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
 			"Runtime": "python3.8",
-			"Timeout": "30"
+			"Timeout": "300"
 			}
 		},
-        "EC2Instance" : {
-            "Type" : "AWS::EC2::Instance",
-            "Properties" : {
-                "KeyName": {
-                    "Ref": "KeyPairName"
-                },
-                "ImageId": {
-                    "Ref": "AMIID"
-                },
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
-
-                "NetworkInterfaces": [
-                    {
-                    "NetworkInterfaceId" : {"Ref" : "InterfaceMgmt"},
-                    "DeviceIndex": "0"
-                    },
-                    {
-                    "NetworkInterfaceId" : {"Ref" : "InterfaceS1U"},
-                    "DeviceIndex": "1"
-                    }
-                ],
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": {"Ref" : "EC2InstanceName"}
-                    },
-                    {   "Key": "Network",
-                        "Value": "Private"
-                    }
-                ]
-            }
-        },
 		"LambdaExecutionRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
@@ -264,32 +227,14 @@
 				"Path": "/",
 				"ManagedPolicyArns": [
 					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-					"arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+					"arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess",
+                    "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 				]
-			}
-		},
-		"VPCENBS1UENBNETRoute" : {
-			"Type" : "AWS::EC2::Route",
-			"Properties" : {
-				"RouteTableId" : {"Fn::GetAtt": ["GetRouteTableID", "RouteTableId"]},
-				"DestinationCidrBlock" : {"Ref": "ENBNETCIDR"},
-				"NetworkInterfaceId" : {"Ref" : "InterfaceS1U"}
 			}
 		}
     },
 
     "Outputs": {
-        "EC2InstanceID": {
-            "Description": "EC2 Instance ID",
-            "Value": {
-                "Ref": "EC2Instance"
-            },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}-EC2InstanceID"
-                }
-            }
-        },
         "SecurityGroupID": {
             "Description": "Security Group ID",
             "Value": {
