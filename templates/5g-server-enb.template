@@ -12,7 +12,7 @@
                         "VPCID",
                         "MgmtSubnetID",
                         "S1USubnetID",
-						"SecurityGroup"
+                        "SecurityGroup"
                     ]
                 },
                 {
@@ -59,7 +59,7 @@
                 "KeyPairName": {
                     "default": "Key Pair Name"
                 },
-				"SecurityGroup": {
+                "SecurityGroup": {
                     "default": "Security Group Name"
                 },
                 "ENBNETCIDR": {
@@ -72,51 +72,21 @@
         }
     },
     "Parameters": {
-	    "AMIID": {
-		    "Description": "The Linux distribution for the AMI to be used for the EC2 instances",
-		    "Type": "AWS::EC2::Image::Id"
-	    },
-	    "InstanceType": {
-		    "AllowedValues": [
-			    "t2.large",
-                "t2.xlarge",
-                "t2.2xlarge",
-			    "t3.large",
-                "t3.xlarge",
-                "t3.2xlarge",
-                "m5.xlarge",
-                "m5.2xlarge",
-                "m5.4xlarge",
-                "m5.12xlarge",
-                "m5.24xlarge",
-                "m5d.large",
-                "m5d.xlarge",
-                "m5d.2xlarge",
-                "m5d.4xlarge",
-                "m5d.12xlarge",
-                "m5d.24xlarge",
-                "c5.large",
-                "c5.xlarge",
-                "c5.2xlarge",
-                "c5.4xlarge",
-                "c5.9xlarge",
-                "c5.18xlarge",
-                "c5d.large",
-                "c5d.xlarge",
-                "c5d.2xlarge",
-                "c5d.4xlarge",
-                "c5d.9xlarge",
-                "c5d.18xlarge",
-                "c5n.large",
+        "AMIID": {
+            "Description": "The Linux distribution for the AMI to be used for the EC2 instances",
+            "Type": "AWS::EC2::Image::Id"
+        },
+        "InstanceType": {
+            "AllowedValues": [
                 "c5n.xlarge",
                 "c5n.2xlarge",
                 "c5n.4xlarge",
                 "c5n.9xlarge",
                 "c5n.18xlarge"
-		    ],
-		    "Default": "c5n.2xlarge",
-		    "Description": "Amazon EC2 instance type",
-		    "Type": "String"
+            ],
+            "Default": "c5n.2xlarge",
+            "Description": "Amazon EC2 instance type",
+            "Type": "String"
         },
         "EC2InstanceName": {
             "Default": "VPC-eNB-Instance",
@@ -125,6 +95,8 @@
         },
         "EC2InstanceCount": {
             "Default": 5,
+            "MinValue": 1,
+            "MaxValue": 15,
             "Description": "EC2 Instance Count",
             "Type": "Number"
         },
@@ -144,14 +116,15 @@
             "Description": "ID of the S1U subnet that you want to provision the EC2 instance into",
             "Type": "AWS::EC2::Subnet::Id"
         },
-		"SecurityGroup": {
+        "SecurityGroup": {
             "Description": "ID of the Security Group that you want to provision the EC2 instance into",
             "Type": "AWS::EC2::SecurityGroup::Id"
         },
         "S3BucketName": {
-			"Description": "S3 Bucket Name",
-			"Type": "String"
-		},
+            "Description": "S3 Bucket Name",
+            "MinLength" : "1",
+            "Type": "String"
+        },
         "ENBNETCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/16)$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16",
@@ -184,10 +157,10 @@
     },
 
     "Resources": {
-		"MultipleInstances": {
-			"Type": "Custom::MultipleInstances",
-			"Properties": {
-				"ServiceToken": { "Fn::GetAtt" : ["MultipleInstancesFunction", "Arn"] },
+        "MultipleInstances": {
+            "Type": "Custom::MultipleInstances",
+            "Properties": {
+                "ServiceToken": { "Fn::GetAtt" : ["MultipleInstancesFunction", "Arn"] },
                 "ImageID": {"Ref": "AMIID"},
                 "VPCType": "enb",
                 "InstanceName": {"Ref": "EC2InstanceName"},
@@ -195,43 +168,43 @@
                 "SecurityGroup": {"Ref": "SecurityGroup"},
                 "KeyPair": {"Ref": "KeyPairName"},
                 "InstanceType": {"Ref": "InstanceType"},
-				"SubnetIds": [{"Ref": "MgmtSubnetID"}, {"Ref": "S1USubnetID"}],
+                "SubnetIds": [{"Ref": "MgmtSubnetID"}, {"Ref": "S1USubnetID"}],
                 "DestinationCIDR": {"Ref": "ENBNETCIDR"}
-			}
-		},
+            }
+        },
 
-		"MultipleInstancesFunction": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-			"Code": {
-				"S3Bucket": {"Ref": "S3BucketName"},
-				"S3Key": "lambda_function.zip"
-			},
-			"Handler": "lambda_function.lambda_handler",
-			"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
-			"Runtime": "python3.8",
-			"Timeout": "300"
-			}
-		},
-		"LambdaExecutionRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [{
-						"Effect": "Allow",
-						"Principal": {"Service": ["lambda.amazonaws.com"]},
-						"Action": ["sts:AssumeRole"]
-					}]
-				},
-				"Path": "/",
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-					"arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess",
+        "MultipleInstancesFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+            "Code": {
+                "S3Bucket": {"Ref": "S3BucketName"},
+                "S3Key": "lambda_function.zip"
+            },
+            "Handler": "lambda_function.lambda_handler",
+            "Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
+            "Runtime": "python3.8",
+            "Timeout": "300"
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Principal": {"Service": ["lambda.amazonaws.com"]},
+                        "Action": ["sts:AssumeRole"]
+                    }]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+                    "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess",
                     "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-				]
-			}
-		}
+                ]
+            }
+        }
     },
 
     "Outputs": {
