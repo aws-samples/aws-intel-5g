@@ -56,24 +56,24 @@
         }
     },
     "Parameters": {
-	    "BastionAMIOS": {
-		    "AllowedValues": [
-		        "Ubuntu-Server-18.04-LTS-HVM",
-			    "Amazon-Linux-HVM"
-		    ],
-		    "Default": "Ubuntu-Server-18.04-LTS-HVM",
-		    "Description": "Ubuntu 18.04 AMI is to be used for the bastion instance.",
-		    "Type": "String"
-	    },
-	    "BastionInstanceType": {
-		    "AllowedValues": [
-			    "t3.small",
-			    "t3.medium",
-			    "t3.large"
-		    ],
-		    "Default": "t3.medium",
-		    "Description": "Amazon EC2 instance type for the bastion instances",
-		    "Type": "String"
+        "BastionAMIOS": {
+            "AllowedValues": [
+                "Ubuntu-Server-18.04-LTS-HVM",
+                "Amazon-Linux-HVM"
+            ],
+            "Default": "Ubuntu-Server-18.04-LTS-HVM",
+            "Description": "Ubuntu 18.04 AMI is to be used for the bastion instance.",
+            "Type": "String"
+        },
+        "BastionInstanceType": {
+            "AllowedValues": [
+                "t3.small",
+                "t3.medium",
+                "t3.large"
+            ],
+            "Default": "t3.medium",
+            "Description": "Amazon EC2 instance type for the bastion instances",
+            "Type": "String"
         },
         "BastionInstanceName": {
             "Description": "Bastion Instance Name",
@@ -101,7 +101,7 @@
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
             "Description": "Allowed CIDR block for external SSH access to the bastions",
             "Type": "String",
-            "Default": "0.0.0.0/0"
+            "Default": "1.1.1.1/32"
         },
         "VPCID": {
             "Description": "ID of the VPC",
@@ -148,11 +148,11 @@
                 "AMZNLINUXHVM": "ami-01f08ef3e76b957e5",
                 "US1804HVM": "ami-003634241a8fcdec0"
             },
-			"ap-southeast-1": {
+            "ap-southeast-1": {
                 "AMZNLINUXHVM": "ami-0c0d01aec729d094d",
                 "US1804HVM": "ami-0007cf37783ff7e10"
             },
-			"ap-south-1": {
+            "ap-south-1": {
                 "AMZNLINUXHVM": "ami-0a780d5bac870126a",
                 "US1804HVM": "ami-02b5fbc2cb28b77b8"
             }
@@ -172,14 +172,14 @@
             "Type": "AWS::EC2::EIP",
             "Properties": {
                 "Domain": "vpc",
-				"Tags": [
+                "Tags": [
                     {
                         "Key": "Name",
                         "Value": {"Fn::Sub": "${BastionInstanceName}-EIP"}
                     }
-				]
+                ]
             }
-			
+
         },
         "BastionInstance" : {
             "Type" : "AWS::EC2::Instance",
@@ -243,28 +243,35 @@
                         "FromPort": "22",
                         "ToPort": "22",
                         "CidrIp": "134.134.139.64/27",
-						"Description": "SSH access from Intel Proxies"
+                        "Description": "SSH access from Intel Proxies"
                     },
-					{
+                    {
                         "IpProtocol": "tcp",
                         "FromPort": "22",
                         "ToPort": "22",
                         "CidrIp": "134.134.137.64/27",
-						"Description": "SSH access from Intel Proxies"
+                        "Description": "SSH access from Intel Proxies"
                     },
-					{
+                    {
                         "IpProtocol": "tcp",
                         "FromPort": "22",
                         "ToPort": "22",
                         "CidrIp": "192.55.51.164/32",
-						"Description": "SSH access from Intel Proxies"
+                        "Description": "SSH access from Intel Proxies"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": {"Ref": "RemoteAccessCIDR"},
+                        "Description": "SSH access from External CIDR"
                     },
                     {
                         "IpProtocol": "icmp",
                         "FromPort": "-1",
                         "ToPort": "-1",
                         "CidrIp": "192.55.51.164/32",
-						"Description": "Ping from Intel vLAB Network"
+                        "Description": "Ping from Intel vLAB Network"
                     }
                 ],
                 "Tags": [

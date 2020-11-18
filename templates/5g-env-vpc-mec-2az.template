@@ -15,17 +15,17 @@
                     },
                     "Parameters": [
                         "AvailabilityZones",
-						"VPCMECName",
+                        "VPCMECName",
                         "VPCMECCIDR",
                         "VPCMECPubSubnet1CIDR",
-						"VPCMECPubSubnet2CIDR",
+                        "VPCMECPubSubnet2CIDR",
                         "VPCMECPrvSubnetMgmtSx1CIDR",
-						"VPCMECPrvSubnetMgmtSx2CIDR",
+                        "VPCMECPrvSubnetMgmtSx2CIDR",
                         "VPCMECPrvSubnetS1UCIDR",
                         "VPCMECPrvSubnetSGICIDR",
                         "VPCMECTenancy",
-						"RemoteAccessCIDR",
-						"ENBNETCIDR",
+                        "RemoteAccessCIDR",
+                        "ENBNETCIDR",
                         "S3BucketName"
                     ]
                 }
@@ -34,25 +34,25 @@
                 "AvailabilityZones": {
                     "default": "Availability Zones"
                 },
-				"VPCMECName": {
-					"default": "VPC MEC Name"
-				},
+                "VPCMECName": {
+                    "default": "VPC MEC Name"
+                },
                 "VPCMECCIDR": {
                     "default": "VPC-MEC CIDR"
                 },
-				"ENBNETCIDR": {
+                "ENBNETCIDR": {
                     "default": "eNB Network CIDR"
                 },
                 "VPCMECPubSubnet1CIDR": {
                     "default": "VPC-MEC Public subnet 1 CIDR"
                 },
-				 "VPCMECPubSubnet2CIDR": {
+                 "VPCMECPubSubnet2CIDR": {
                     "default": "VPC-MEC Public subnet 2 CIDR"
                 },
                 "VPCMECPrvSubnetMgmtSx1CIDR": {
                     "default": "VPC-MEC Private subnet Mgmt/Sx 1 CIDR"
                 },
-				 "VPCMECPrvSubnetMgmtSx2CIDR": {
+                 "VPCMECPrvSubnetMgmtSx2CIDR": {
                     "default": "VPC-MEC Private subnet Mgmt/Sx 2 CIDR"
                 },
                 "VPCMECPrvSubnetS1UCIDR": {
@@ -61,7 +61,7 @@
                 "VPCMECPrvSubnetSGICIDR": {
                     "default": "VPC-MEC Private subnet SGI CIDR"
                 },
-				"RemoteAccessCIDR": {
+                "RemoteAccessCIDR": {
                     "default": "Allowed Instance External Access CIDR"
                 },
                 "VPCMECTenancy": {
@@ -78,11 +78,11 @@
             "Description": "Select one Availability Zone for the VPC.",
             "Type": "List<AWS::EC2::AvailabilityZone::Name>"
         },
-		"VPCMECName": {
-			"Description": "VPC eNB name",
-			"Type": "String",
-			"Default": "VPC-MEC"
-		},
+        "VPCMECName": {
+            "Description": "VPC eNB name",
+            "Type": "String",
+            "Default": "VPC-MEC"
+        },
         "VPCMECCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
@@ -90,7 +90,7 @@
             "Description": "CIDR block for VPC-MEC",
             "Type": "String"
         },
-		"ENBNETCIDR": {
+        "ENBNETCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
             "Default": "192.168.0.0/16",
@@ -104,7 +104,7 @@
             "Description": "VPC-MECP public subnet 1 located in Availability Zone 1",
             "Type": "String"
         },
-		"VPCMECPubSubnet2CIDR": {
+        "VPCMECPubSubnet2CIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
             "Default": "10.1.10.0/24",
@@ -118,7 +118,7 @@
             "Description": "VPC-MECP private subnet Mgmt/Sx located in Availability Zone 1",
             "Type": "String"
         },
-		"VPCMECPrvSubnetMgmtSx2CIDR": {
+        "VPCMECPrvSubnetMgmtSx2CIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
             "Default": "10.1.11.0/24",
@@ -148,7 +148,7 @@
             "Description": "The allowed tenancy of instances launched into the VPC-MEC",
             "Type": "String"
         },
-		"RemoteAccessCIDR": {
+        "RemoteAccessCIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
             "Description": "Allowed CIDR block for external SSH access to the EC2 instance",
@@ -156,9 +156,10 @@
             "Default": "0.0.0.0/0"
         },
         "S3BucketName": {
-			"Description": "S3 Bucket Name",
-			"Type": "String"
-		}
+            "Description": "S3 Bucket Name",
+            "MinLength" : "1",
+            "Type": "String"
+        }
     },
 
     "Resources": {
@@ -637,12 +638,12 @@
             "Type": "AWS::EC2::EIP",
             "Properties": {
                 "Domain": "vpc",
-				"Tags": [
+                "Tags": [
                     {
                         "Key": "Name",
                         "Value": {"Fn::Sub": "${VPCMECName}-EIP"}
                     }
-				]
+                ]
             }
         },
         "VPCMECNATGateway1": {
@@ -658,57 +659,57 @@
                 "SubnetId": {
                     "Ref": "VPCMECPubSubnet1"
                 },
-				"Tags": [
+                "Tags": [
                     {
                         "Key": "Name",
                         "Value": {"Fn::Sub": "${VPCMECName}-NATGW"}
                     }
-				]
+                ]
             }
         },
         "GetSupernetCIDR": {
-			"Type": "Custom::SupernetCIDR",
-			"Properties": {
-				"ServiceToken": { "Fn::GetAtt" : ["SupernetCIDRFunction", "Arn"] },
-				"VPCCIDR": {"Ref": "VPCMECCIDR"}
-			}
-		},
+            "Type": "Custom::SupernetCIDR",
+            "Properties": {
+                "ServiceToken": { "Fn::GetAtt" : ["SupernetCIDRFunction", "Arn"] },
+                "VPCCIDR": {"Ref": "VPCMECCIDR"}
+            }
+        },
 
-		"SupernetCIDRFunction": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-			"Code": {
-				"S3Bucket": {"Ref": "S3BucketName"},
-				"S3Key": "lambda_function.zip"
-			},
-			"Handler": "lambda_function.handler_supernet_ip_cidr",
-			"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
-			"Runtime": "python3.8",
-			"Timeout": "30"
-			}
-		},
+        "SupernetCIDRFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+            "Code": {
+                "S3Bucket": {"Ref": "S3BucketName"},
+                "S3Key": "lambda_function.zip"
+            },
+            "Handler": "lambda_function.handler_supernet_ip_cidr",
+            "Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
+            "Runtime": "python3.8",
+            "Timeout": "30"
+            }
+        },
         "LambdaExecutionRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [{
-						"Effect": "Allow",
-						"Principal": {"Service": ["lambda.amazonaws.com"]},
-						"Action": ["sts:AssumeRole"]
-					}]
-				},
-				"Path": "/",
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-				]
-			}
-		},
-		"SecurityGroup": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Principal": {"Service": ["lambda.amazonaws.com"]},
+                        "Action": ["sts:AssumeRole"]
+                    }]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                ]
+            }
+        },
+        "SecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": "Enables SSH Access to EC2 instance",
-				"GroupName": {"Fn::Sub": "${VPCMECName}-Instance-SG"},
+                "GroupName": {"Fn::Sub": "${VPCMECName}-Instance-SG"},
                 "VpcId": {
                     "Ref": "VPCMEC"
                 },
@@ -761,7 +762,7 @@
                 }
             }
         },
-		"VPCMECPublicSubnet2ID": {
+        "VPCMECPublicSubnet2ID": {
             "Value": {
                 "Ref": "VPCMECPubSubnet2"
             },
@@ -794,7 +795,7 @@
                 }
             }
         },
-		"VPCMECS1USubnetID": {
+        "VPCMECS1USubnetID": {
             "Value": {
                 "Ref": "VPCMECPrvSubnetS1U"
             },
@@ -805,7 +806,7 @@
                 }
             }
         },
-		"VPCMECSGISubnetID": {
+        "VPCMECSGISubnetID": {
             "Value": {
                 "Ref": "VPCMECPrvSubnetSGI"
             },
@@ -816,7 +817,7 @@
                 }
             }
         },
-		"VPCMECPrvSubnetS1URouteTableID": {
+        "VPCMECPrvSubnetS1URouteTableID": {
             "Value": {
                 "Ref": "VPCMECPrvSubnetS1URouteTable"
             },
@@ -827,7 +828,7 @@
                 }
             }
         },
-		"VPCMECPrvSubnetSGIRouteTableID": {
+        "VPCMECPrvSubnetSGIRouteTableID": {
             "Value": {
                 "Ref": "VPCMECPrvSubnetSGIRouteTable"
             },
@@ -838,7 +839,7 @@
                 }
             }
         },
-		"VPCMECPrvSubnetMgmtRouteTableID": {
+        "VPCMECPrvSubnetMgmtRouteTableID": {
             "Value": {
                 "Ref": "VPCMECPrvSubnetMgmtSxRouteTable"
             },
